@@ -4,6 +4,8 @@ import com.arun.aisupportplatform.dto.LoginRequest;
 import com.arun.aisupportplatform.dto.UserResponse;
 import com.arun.aisupportplatform.entity.User;
 import com.arun.aisupportplatform.repository.UserRepository;
+import com.arun.aisupportplatform.security.JwtService;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +19,8 @@ public class UserService {
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final JwtService jwtService;
 
     public UserResponse registerUser(User user){
 
@@ -62,6 +66,22 @@ public class UserService {
             );
         }
 
-        return "Login Successful";
+        return jwtService.generateToken(
+                user.getEmail()
+        );
+    }
+
+    public UserResponse getCurrentUser(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        return UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
     }
 }
