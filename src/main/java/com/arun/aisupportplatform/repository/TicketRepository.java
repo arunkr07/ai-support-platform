@@ -1,6 +1,8 @@
 package com.arun.aisupportplatform.repository;
 
 import com.arun.aisupportplatform.entity.Ticket;
+import com.arun.aisupportplatform.entity.TicketPriority;
+import com.arun.aisupportplatform.entity.TicketStatus;
 import com.arun.aisupportplatform.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,4 +15,19 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     Optional<Ticket> findByIdAndCustomer(Long id, User customer);
 
+    List<Ticket> findByAssignedAgent(User assignedAgent);
+
+    Optional<Ticket> findByIdAndAssignedAgent(Long id,User assignedAgent);
+
+    List<Ticket> findByAssignedAgentAndStatus(User assignedAgent, TicketStatus status);
+
+    List<Ticket> findByAssignedAgentAndPriority(User assignedAgent, TicketPriority priority);
+
+    List<Ticket> findByAssignedAgentAndStatusAndPriority(User assignedAgent, TicketStatus status, TicketPriority priority);
+
+    List<Ticket> findByAssignedAgentAndTitleContainingIgnoreCase(User assignedAgent, String title);
+
+    long countByAssignedAgent(User assignedAgent);
+
+    long countByAssignedAgentAndStatus(User assignedAgent, TicketStatus status);
 }

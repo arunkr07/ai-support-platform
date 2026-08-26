@@ -40,4 +40,8 @@ public class Ticket {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "agent_id")
+    private User assignedAgent;
 }

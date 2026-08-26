@@ -3,6 +3,7 @@ package com.arun.aisupportplatform.service;
 import com.arun.aisupportplatform.dto.LoginRequest;
 import com.arun.aisupportplatform.dto.UserResponse;
 import com.arun.aisupportplatform.entity.User;
+import com.arun.aisupportplatform.entity.UserRole;
 import com.arun.aisupportplatform.repository.UserRepository;
 import com.arun.aisupportplatform.security.JwtService;
 import lombok.Builder;
@@ -28,6 +29,8 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
+        user.setRole(UserRole.CUSTOMER);
+
         user.setPassword(
                 passwordEncoder.encode(user.getPassword())
         );
@@ -38,7 +41,7 @@ public class UserService {
                 savedUser.getId(),
                 savedUser.getName(),
                 savedUser.getEmail(),
-                savedUser.getRole()
+                savedUser.getRole().name()
         );
     }
 
@@ -81,7 +84,7 @@ public class UserService {
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .role(user.getRole())
+                .role(user.getRole().name())
                 .build();
     }
 }

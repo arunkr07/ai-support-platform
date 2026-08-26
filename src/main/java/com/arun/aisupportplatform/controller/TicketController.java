@@ -1,5 +1,6 @@
 package com.arun.aisupportplatform.controller;
 
+import com.arun.aisupportplatform.dto.TicketMessageResponse;
 import com.arun.aisupportplatform.dto.TicketResponse;
 import com.arun.aisupportplatform.entity.TicketPriority;
 import com.arun.aisupportplatform.service.TicketService;
@@ -108,5 +109,32 @@ public class TicketController {
         ticketService.deleteTicket(id, email);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/messages")
+    public List<TicketMessageResponse> getMessages(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+
+        String email = authentication.getName();
+
+        return ticketService.getCustomerMessages(id, email);
+    }
+
+    @PostMapping("/{id}/messages")
+    public TicketMessageResponse sendMessage(
+            @PathVariable Long id,
+            @RequestBody AgentController.SendMessageRequest request,
+            Authentication authentication
+    ) {
+
+        String email = authentication.getName();
+
+        return ticketService.sendCustomerMessage(
+                id,
+                email,
+                request.content()
+        );
     }
 }
