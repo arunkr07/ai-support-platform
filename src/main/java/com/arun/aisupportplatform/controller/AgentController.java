@@ -1,13 +1,15 @@
 package com.arun.aisupportplatform.controller;
 
-import com.arun.aisupportplatform.dto.AgentDashboardResponse;
-import com.arun.aisupportplatform.dto.TicketMessageResponse;
-import com.arun.aisupportplatform.dto.TicketNoteResponse;
-import com.arun.aisupportplatform.dto.TicketResponse;
+import com.arun.aisupportplatform.dto.*;
 import com.arun.aisupportplatform.entity.TicketNote;
 import com.arun.aisupportplatform.entity.TicketPriority;
 import com.arun.aisupportplatform.entity.TicketStatus;
 import com.arun.aisupportplatform.service.TicketService;
+import com.arun.aisupportplatform.service.UserService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -20,18 +22,24 @@ import java.util.List;
 public class AgentController {
 
     private final TicketService ticketService;
+    private final UserService userService;
 
     public record UpdateStatusRequest(
+            @NotNull(message = "Status is required")
             TicketStatus status
     ) {
     }
 
     public record AddNoteRequest(
+            @NotBlank(message = "Note content is required")
+            @Size(max = 2000, message = "Note must not exceed 2000 characters")
             String content
     ) {
     }
 
     public record SendMessageRequest(
+            @NotBlank(message = "Message content is required")
+            @Size(max = 2000, message = "Message must not exceed 2000 characters")
             String content
     ) {
     }
@@ -58,7 +66,7 @@ public class AgentController {
     @PutMapping("/tickets/{id}/status")
     public TicketResponse updateTicketStatus(
             @PathVariable Long id,
-            @RequestBody UpdateStatusRequest request,
+            @Valid @RequestBody UpdateStatusRequest request,
             Authentication authentication
     ) {
         String email = authentication.getName();
@@ -83,7 +91,7 @@ public class AgentController {
     @PostMapping("/tickets/{id}/notes")
     public TicketNoteResponse addInternalNote(
             @PathVariable Long id,
-            @RequestBody AddNoteRequest request,
+            @Valid @RequestBody AddNoteRequest request,
             Authentication authentication
     ) {
 
@@ -99,7 +107,7 @@ public class AgentController {
     @PostMapping("/tickets/{id}/messages")
     public TicketMessageResponse sendMessage(
             @PathVariable Long id,
-            @RequestBody SendMessageRequest request,
+            @Valid @RequestBody SendMessageRequest request,
             Authentication authentication
     ) {
 
@@ -150,4 +158,5 @@ public class AgentController {
 
         return ticketService.getAgentDashboard(email);
     }
+
 }

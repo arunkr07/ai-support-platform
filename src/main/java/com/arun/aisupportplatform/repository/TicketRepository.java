@@ -30,4 +30,13 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     long countByAssignedAgent(User assignedAgent);
 
     long countByAssignedAgentAndStatus(User assignedAgent, TicketStatus status);
+
+    List<Ticket> findByAssignedAgentIsNull();
+
+    long countByStatus(TicketStatus status);
+
+    long countByAssignedAgentIsNull();
+
+    List<Ticket> findByTitleContainingIgnoreCase(String title);
+
 }

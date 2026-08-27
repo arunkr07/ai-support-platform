@@ -4,6 +4,10 @@ import com.arun.aisupportplatform.dto.TicketMessageResponse;
 import com.arun.aisupportplatform.dto.TicketResponse;
 import com.arun.aisupportplatform.entity.TicketPriority;
 import com.arun.aisupportplatform.service.TicketService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,23 +22,38 @@ public class TicketController {
 
     private final TicketService ticketService;
 
-    public record UpdateTicketRequest(
+    public record CreateTicketRequest(
+            @NotBlank(message = "Title is required")
+            @Size(max = 100, message = "Title must not exceed 100 characters")
             String title,
+
+            @NotBlank(message = "Description is required")
+            @Size(max = 1000, message = "Description must not exceed 1000 characters")
             String description,
+
+            @NotNull(message = "Priority is required")
             TicketPriority priority
     ) {
     }
 
-    public record CreateTicketRequest(
+    public record UpdateTicketRequest(
+
+            @NotBlank(message = "Title is required")
+            @Size(max = 100, message = "Title must not exceed 100 characters")
             String title,
+
+            @NotBlank(message = "Description is required")
+            @Size(max = 1000, message = "Description must not exceed 1000 characters")
             String description,
+
+            @NotNull(message = "Priority is required")
             TicketPriority priority
     ) {
     }
 
     @PostMapping
     public TicketResponse createTicket(
-            @RequestBody CreateTicketRequest request,
+            @Valid @RequestBody CreateTicketRequest request,
             Authentication authentication
     ) {
 
@@ -83,7 +102,7 @@ public class TicketController {
     @PutMapping("/{id}")
     public TicketResponse updateTicket(
             @PathVariable Long id,
-            @RequestBody UpdateTicketRequest request,
+            @Valid @RequestBody UpdateTicketRequest request,
             Authentication authentication
     ) {
 
@@ -125,7 +144,7 @@ public class TicketController {
     @PostMapping("/{id}/messages")
     public TicketMessageResponse sendMessage(
             @PathVariable Long id,
-            @RequestBody AgentController.SendMessageRequest request,
+            @Valid @RequestBody AgentController.SendMessageRequest request,
             Authentication authentication
     ) {
 

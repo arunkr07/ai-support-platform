@@ -10,4 +10,6 @@ public interface TicketNoteRepository
         extends JpaRepository<TicketNote, Long> {
 
     List<TicketNote> findByTicket(Ticket ticket);
+
+    void deleteByTicket(Ticket ticket);
 }

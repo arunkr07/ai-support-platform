@@ -10,4 +10,6 @@ public interface TicketMessageRepository
         extends JpaRepository<TicketMessage, Long> {
 
     List<TicketMessage> findByTicketOrderByCreatedAtAsc(Ticket ticket);
+
+    void deleteByTicket(Ticket ticket);
 }

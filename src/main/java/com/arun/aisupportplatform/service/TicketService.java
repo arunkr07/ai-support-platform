@@ -1,9 +1,6 @@
 package com.arun.aisupportplatform.service;
 
-import com.arun.aisupportplatform.dto.AgentDashboardResponse;
-import com.arun.aisupportplatform.dto.TicketMessageResponse;
-import com.arun.aisupportplatform.dto.TicketNoteResponse;
-import com.arun.aisupportplatform.dto.TicketResponse;
+import com.arun.aisupportplatform.dto.*;
 import com.arun.aisupportplatform.entity.*;
 import com.arun.aisupportplatform.exception.TicketAlreadyAssignedException;
 import com.arun.aisupportplatform.exception.TicketNotFoundException;
@@ -11,6 +8,7 @@ import com.arun.aisupportplatform.repository.TicketMessageRepository;
 import com.arun.aisupportplatform.repository.TicketNoteRepository;
 import com.arun.aisupportplatform.repository.TicketRepository;
 import com.arun.aisupportplatform.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
@@ -591,4 +589,232 @@ public class TicketService {
                 resolvedTickets
         );
     }
+
+    public TicketResponse assignTicket(
+            Long ticketId,
+            Long agentId
+    ) {
+
+        Ticket ticket = ticketRepository
+                .findById(ticketId)
+                .orElseThrow(() ->
+                        new TicketNotFoundException("Ticket not found"));
+
+        User agent = userRepository
+                .findById(agentId)
+                .orElseThrow(() ->
+                        new RuntimeException("Agent not found"));
+
+        if (!agent.getRole().equals(UserRole.AGENT)) {
+            throw new RuntimeException("User is not an agent");
+        }
+
+        if (ticket.getAssignedAgent() != null) {
+            throw new TicketAlreadyAssignedException(
+                    "Ticket is already assigned"
+            );
+        }
+
+        ticket.setAssignedAgent(agent);
+        ticket.setStatus(TicketStatus.IN_PROGRESS);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        return TicketResponse.builder()
+                .id(savedTicket.getId())
+                .title(savedTicket.getTitle())
+                .description(savedTicket.getDescription())
+                .status(savedTicket.getStatus())
+                .priority(savedTicket.getPriority())
+                .customerId(savedTicket.getCustomer().getId())
+                .customerName(savedTicket.getCustomer().getName())
+                .customerEmail(savedTicket.getCustomer().getEmail())
+                .createdAt(savedTicket.getCreatedAt())
+                .updatedAt(savedTicket.getUpdatedAt())
+                .build();
+    }
+
+    public List<TicketResponse> getUnassignedTickets() {
+
+        return ticketRepository.findByAssignedAgentIsNull()
+                .stream()
+                .map(ticket -> TicketResponse.builder()
+                        .id(ticket.getId())
+                        .title(ticket.getTitle())
+                        .description(ticket.getDescription())
+                        .status(ticket.getStatus())
+                        .priority(ticket.getPriority())
+                        .customerId(ticket.getCustomer().getId())
+                        .customerName(ticket.getCustomer().getName())
+                        .customerEmail(ticket.getCustomer().getEmail())
+                        .createdAt(ticket.getCreatedAt())
+                        .updatedAt(ticket.getUpdatedAt())
+                        .build())
+                .toList();
+    }
+
+    public TicketResponse reassignTicket(
+            Long ticketId,
+            Long agentId
+    ) {
+
+        Ticket ticket = ticketRepository
+                .findById(ticketId)
+                .orElseThrow(() ->
+                        new TicketNotFoundException("Ticket not found"));
+
+        User agent = userRepository
+                .findById(agentId)
+                .orElseThrow(() ->
+                        new RuntimeException("Agent not found"));
+
+        if (!agent.getRole().equals(UserRole.AGENT)) {
+            throw new RuntimeException("User is not an agent");
+        }
+
+        ticket.setAssignedAgent(agent);
+        ticket.setStatus(TicketStatus.IN_PROGRESS);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        return TicketResponse.builder()
+                .id(savedTicket.getId())
+                .title(savedTicket.getTitle())
+                .description(savedTicket.getDescription())
+                .status(savedTicket.getStatus())
+                .priority(savedTicket.getPriority())
+                .customerId(savedTicket.getCustomer().getId())
+                .customerName(savedTicket.getCustomer().getName())
+                .customerEmail(savedTicket.getCustomer().getEmail())
+                .createdAt(savedTicket.getCreatedAt())
+                .updatedAt(savedTicket.getUpdatedAt())
+                .build();
+    }
+
+    public TicketResponse adminUpdateTicketStatus(
+            Long ticketId,
+            TicketStatus status
+    ) {
+
+        Ticket ticket = ticketRepository
+                .findById(ticketId)
+                .orElseThrow(() ->
+                        new TicketNotFoundException("Ticket not found"));
+
+        ticket.setStatus(status);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        return TicketResponse.builder()
+                .id(savedTicket.getId())
+                .title(savedTicket.getTitle())
+                .description(savedTicket.getDescription())
+                .status(savedTicket.getStatus())
+                .priority(savedTicket.getPriority())
+                .customerId(savedTicket.getCustomer().getId())
+                .customerName(savedTicket.getCustomer().getName())
+                .customerEmail(savedTicket.getCustomer().getEmail())
+                .createdAt(savedTicket.getCreatedAt())
+                .updatedAt(savedTicket.getUpdatedAt())
+                .build();
+    }
+
+    public AdminDashboardResponse getAdminDashboard() {
+
+        long totalTickets = ticketRepository.count();
+
+        long openTickets =
+                ticketRepository.countByStatus(TicketStatus.OPEN);
+
+        long inProgressTickets =
+                ticketRepository.countByStatus(TicketStatus.IN_PROGRESS);
+
+        long resolvedTickets =
+                ticketRepository.countByStatus(TicketStatus.RESOLVED);
+
+        long unassignedTickets =
+                ticketRepository.countByAssignedAgentIsNull();
+
+        long totalAgents =
+                userRepository.findByRole(UserRole.AGENT).size();
+
+        long totalCustomers =
+                userRepository.findByRole(UserRole.CUSTOMER).size();
+
+        return new AdminDashboardResponse(
+                totalTickets,
+                openTickets,
+                inProgressTickets,
+                resolvedTickets,
+                unassignedTickets,
+                totalAgents,
+                totalCustomers
+        );
+    }
+
+    public List<TicketResponse> searchTickets(String search) {
+
+        List<Ticket> tickets;
+
+        if (search == null || search.isBlank()) {
+            tickets = ticketRepository.findAll();
+        } else {
+            tickets = ticketRepository
+                    .findByTitleContainingIgnoreCase(search);
+        }
+
+        return tickets.stream()
+                .map(ticket -> TicketResponse.builder()
+                        .id(ticket.getId())
+                        .title(ticket.getTitle())
+                        .description(ticket.getDescription())
+                        .status(ticket.getStatus())
+                        .priority(ticket.getPriority())
+                        .customerId(ticket.getCustomer().getId())
+                        .customerName(ticket.getCustomer().getName())
+                        .customerEmail(ticket.getCustomer().getEmail())
+                        .createdAt(ticket.getCreatedAt())
+                        .updatedAt(ticket.getUpdatedAt())
+                        .build())
+                .toList();
+    }
+
+    public TicketResponse getAdminTicketById(Long ticketId) {
+
+        Ticket ticket = ticketRepository
+                .findById(ticketId)
+                .orElseThrow(() ->
+                        new TicketNotFoundException("Ticket not found"));
+
+        return TicketResponse.builder()
+                .id(ticket.getId())
+                .title(ticket.getTitle())
+                .description(ticket.getDescription())
+                .status(ticket.getStatus())
+                .priority(ticket.getPriority())
+                .customerId(ticket.getCustomer().getId())
+                .customerName(ticket.getCustomer().getName())
+                .customerEmail(ticket.getCustomer().getEmail())
+                .createdAt(ticket.getCreatedAt())
+                .updatedAt(ticket.getUpdatedAt())
+                .build();
+    }
+
+    @Transactional
+    public void adminDeleteTicket(Long ticketId) {
+
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() ->
+                        new TicketNotFoundException("Ticket not found"));
+
+        ticketMessageRepository.deleteByTicket(ticket);
+
+        ticketNoteRepository.deleteByTicket(ticket);
+
+        ticketRepository.delete(ticket);
+    }
+
 }
