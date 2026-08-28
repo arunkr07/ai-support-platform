@@ -5,6 +5,8 @@ import com.arun.aisupportplatform.entity.TicketPriority;
 import com.arun.aisupportplatform.entity.TicketStatus;
 import com.arun.aisupportplatform.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,5 +40,19 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     long countByAssignedAgentIsNull();
 
     List<Ticket> findByTitleContainingIgnoreCase(String title);
+
+    List<Ticket> findByStatus(TicketStatus status);
+
+    List<Ticket> findByPriority(TicketPriority priority);
+
+    List<Ticket> findByStatusAndPriority(
+            TicketStatus status,
+            TicketPriority priority
+    );
+
+    List<Ticket> findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
+            String title,
+            String description
+    );
 
 }

@@ -10,14 +10,13 @@ import com.arun.aisupportplatform.repository.TicketRepository;
 import com.arun.aisupportplatform.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -181,9 +180,107 @@ public class TicketService {
         ticketRepository.delete(ticket);
     }
 
-    public List<TicketResponse> getAllTickets() {
-        return ticketRepository.findAll()
-                .stream()
+    public List<TicketResponse> getAllTickets(
+            TicketStatus status,
+            TicketPriority priority,
+            String search,
+            String sort
+    ) {
+
+        List<Ticket> tickets;
+
+        if (search != null && !search.isBlank()) {
+
+            tickets = ticketRepository
+                    .findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
+                            search,
+                            search
+                    );
+
+            if (status != null) {
+                tickets = tickets.stream()
+                        .filter(ticket -> ticket.getStatus() == status)
+                        .toList();
+            }
+
+            if (priority != null) {
+                tickets = tickets.stream()
+                        .filter(ticket -> ticket.getPriority() == priority)
+                        .toList();
+            }
+
+        } else if (status != null && priority != null) {
+
+            tickets = ticketRepository
+                    .findByStatusAndPriority(status, priority);
+
+        } else if (status != null) {
+
+            tickets = ticketRepository.findByStatus(status);
+
+        } else if (priority != null) {
+
+            tickets = ticketRepository.findByPriority(priority);
+
+        } else {
+
+            tickets = ticketRepository.findAll();
+        }
+
+        if (sort != null && !sort.isBlank()) {
+
+            String[] sortParts = sort.split(",");
+
+            String field = sortParts[0];
+
+            Sort.Direction direction =
+                    sortParts.length > 1
+                            ? Sort.Direction.fromString(sortParts[1])
+                            : Sort.Direction.ASC;
+
+            tickets = tickets.stream()
+                    .sorted((ticket1, ticket2) -> {
+
+                        Comparable value1;
+                        Comparable value2;
+
+                        switch (field) {
+
+                            case "id" -> {
+                                value1 = ticket1.getId();
+                                value2 = ticket2.getId();
+                            }
+
+                            case "title" -> {
+                                value1 = ticket1.getTitle();
+                                value2 = ticket2.getTitle();
+                            }
+
+                            case "createdAt" -> {
+                                value1 = ticket1.getCreatedAt();
+                                value2 = ticket2.getCreatedAt();
+                            }
+
+                            case "updatedAt" -> {
+                                value1 = ticket1.getUpdatedAt();
+                                value2 = ticket2.getUpdatedAt();
+                            }
+
+                            default -> throw new IllegalArgumentException(
+                                    "Invalid sort field: " + field
+                            );
+                        }
+
+                        int result = value1.compareTo(value2);
+
+                        return direction.isAscending()
+                                ? result
+                                : -result;
+                    })
+                    .toList();
+        }
+
+        return tickets.stream()
                 .map(ticket -> TicketResponse.builder()
                         .id(ticket.getId())
                         .title(ticket.getTitle())

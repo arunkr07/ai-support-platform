@@ -7,6 +7,7 @@ import com.arun.aisupportplatform.dto.UserResponse;
 import com.arun.aisupportplatform.entity.Ticket;
 import com.arun.aisupportplatform.entity.User;
 import com.arun.aisupportplatform.entity.UserRole;
+import com.arun.aisupportplatform.exception.EmailAlreadyExistsException;
 import com.arun.aisupportplatform.exception.UserDeletionException;
 import com.arun.aisupportplatform.exception.UserNotFoundException;
 import com.arun.aisupportplatform.repository.TicketRepository;
@@ -36,7 +37,7 @@ public class UserService {
     public UserResponse registerUser(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         User user = User.builder()
@@ -173,7 +174,7 @@ public class UserService {
     ) {
 
         if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         User agent = User.builder()

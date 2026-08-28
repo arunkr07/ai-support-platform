@@ -1,6 +1,8 @@
 package com.arun.aisupportplatform.controller;
 
 import com.arun.aisupportplatform.dto.*;
+import com.arun.aisupportplatform.entity.TicketPriority;
+import com.arun.aisupportplatform.entity.TicketStatus;
 import com.arun.aisupportplatform.service.TicketService;
 import com.arun.aisupportplatform.service.UserService;
 import jakarta.validation.Valid;
@@ -37,11 +39,20 @@ public class AdminController {
     }
 
     @GetMapping("/tickets")
-    public List<TicketResponse> getAllTickets() {
+    public List<TicketResponse> getAllTickets(
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) TicketPriority priority,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sort
+    ) {
 
-        return ticketService.getAllTickets();
+        return ticketService.getAllTickets(
+                status,
+                priority,
+                search,
+                sort
+        );
     }
-
     @PostMapping("/tickets/{id}/assign")
     public TicketResponse assignTicket(
             @PathVariable Long id,
