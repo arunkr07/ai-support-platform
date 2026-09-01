@@ -1,7 +1,6 @@
 package com.arun.aisupportplatform.controller;
 
 import com.arun.aisupportplatform.dto.*;
-import com.arun.aisupportplatform.entity.TicketNote;
 import com.arun.aisupportplatform.entity.TicketPriority;
 import com.arun.aisupportplatform.entity.TicketStatus;
 import com.arun.aisupportplatform.service.TicketService;
@@ -22,7 +21,6 @@ import java.util.List;
 public class AgentController {
 
     private final TicketService ticketService;
-    private final UserService userService;
 
     public record UpdateStatusRequest(
             @NotNull(message = "Status is required")

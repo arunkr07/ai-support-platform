@@ -56,14 +56,6 @@ public class TicketController {
             @Valid @RequestBody CreateTicketRequest request,
             Authentication authentication
     ) {
-
-        System.out.println("========== TICKET REQUEST ==========");
-        System.out.println("Authentication: " + authentication);
-        System.out.println("User: " + authentication.getName());
-        System.out.println("Title: " + request.title());
-        System.out.println("Description: " + request.description());
-        System.out.println("Priority: " + request.priority());
-
         String email = authentication.getName();
 
         return ticketService.createTicket(
@@ -156,4 +148,17 @@ public class TicketController {
                 request.content()
         );
     }
+
+    @PutMapping("/{id}/reopen")
+    public TicketResponse reopenTicket(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+
+        return ticketService.reopenTicket(
+                id,
+                authentication.getName()
+        );
+    }
+
 }

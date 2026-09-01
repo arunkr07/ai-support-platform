@@ -2,13 +2,14 @@ package com.arun.aisupportplatform.service;
 
 import com.arun.aisupportplatform.dto.*;
 import com.arun.aisupportplatform.entity.*;
+import com.arun.aisupportplatform.exception.AgentNotFoundException;
 import com.arun.aisupportplatform.exception.TicketAlreadyAssignedException;
 import com.arun.aisupportplatform.exception.TicketNotFoundException;
 import com.arun.aisupportplatform.repository.TicketMessageRepository;
 import com.arun.aisupportplatform.repository.TicketNoteRepository;
 import com.arun.aisupportplatform.repository.TicketRepository;
 import com.arun.aisupportplatform.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
@@ -16,7 +17,6 @@ import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +27,7 @@ public class TicketService {
     private final TicketNoteRepository ticketNoteRepository;
     private final TicketMessageRepository ticketMessageRepository;
 
+    @Transactional
     public TicketResponse createTicket(
             String email,
             String title,
@@ -78,8 +79,6 @@ public class TicketService {
         Optional<Ticket> ticketOptional =
                 ticketRepository.findByIdAndCustomer(ticketId, customer);
 
-        System.out.println("TICKET FOUND: " + ticketOptional.isPresent());
-
         if (ticketOptional.isEmpty()) {
             throw new TicketNotFoundException("Ticket not found");
         }
@@ -125,6 +124,7 @@ public class TicketService {
                 .toList();
     }
 
+    @Transactional
     public TicketResponse updateTicket(
             Long ticketId,
             String email,
@@ -141,6 +141,8 @@ public class TicketService {
                 .findByIdAndCustomer(ticketId, customer)
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
+
+        validateTicketIsNotClosed(ticket);
 
         ticket.setTitle(title);
         ticket.setDescription(description);
@@ -163,6 +165,7 @@ public class TicketService {
                 .build();
     }
 
+    @Transactional
     public void deleteTicket(
             Long ticketId,
             String email
@@ -296,14 +299,53 @@ public class TicketService {
                 .toList();
     }
 
+    @Transactional
+    public TicketResponse reopenTicket(
+            Long ticketId,
+            String email
+    ) {
+
+        User customer = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("Customer not found"));
+
+        Ticket ticket = ticketRepository
+                .findByIdAndCustomer(ticketId, customer)
+                .orElseThrow(() ->
+                        new TicketNotFoundException("Ticket not found"));
+
+        if (ticket.getStatus() != TicketStatus.RESOLVED) {
+            throw new IllegalArgumentException(
+                    "Only resolved tickets can be reopened"
+            );
+        }
+
+        ticket.setStatus(TicketStatus.IN_PROGRESS);
+        ticket.setUpdatedAt(LocalDateTime.now());
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        return TicketResponse.builder()
+                .id(savedTicket.getId())
+                .title(savedTicket.getTitle())
+                .description(savedTicket.getDescription())
+                .status(savedTicket.getStatus())
+                .priority(savedTicket.getPriority())
+                .customerId(savedTicket.getCustomer().getId())
+                .customerName(savedTicket.getCustomer().getName())
+                .customerEmail(savedTicket.getCustomer().getEmail())
+                .createdAt(savedTicket.getCreatedAt())
+                .updatedAt(savedTicket.getUpdatedAt())
+                .build();
+    }
+
+    @Transactional
     public TicketResponse claimTicket(
             Long ticketId,
             String email
     ) {
 
-        User agent = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+        User agent = getAgent(email);
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() ->
@@ -337,12 +379,29 @@ public class TicketService {
 
     public List<TicketResponse> getAssignedTickets(String email) {
 
-        User agent = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+                        new RuntimeException("User not found"));
 
-        return ticketRepository.findByAssignedAgent(agent)
-                .stream()
+        List<Ticket> tickets;
+
+        if (user.getRole() == UserRole.ADMIN) {
+
+            tickets = ticketRepository.findAll()
+                    .stream()
+                    .filter(ticket -> ticket.getAssignedAgent() != null)
+                    .toList();
+
+        } else if (user.getRole() == UserRole.AGENT) {
+
+            tickets = ticketRepository.findByAssignedAgent(user);
+
+        } else {
+
+            throw new RuntimeException("User is not authorized");
+        }
+
+        return tickets.stream()
                 .map(ticket -> TicketResponse.builder()
                         .id(ticket.getId())
                         .title(ticket.getTitle())
@@ -358,22 +417,34 @@ public class TicketService {
                 .toList();
     }
 
+    @Transactional
     public TicketResponse updateTicketStatus(
             Long ticketId,
             String email,
             TicketStatus status
     ) {
 
-        User agent = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+        User agent = getAgent(email);
 
         Ticket ticket = ticketRepository
                 .findByIdAndAssignedAgent(ticketId, agent)
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
 
+        if (status == TicketStatus.CLOSED) {
+            throw new IllegalArgumentException(
+                    "Agents cannot close tickets"
+            );
+        }
+
+
+        validateStatusTransition(
+                ticket.getStatus(),
+                status
+        );
+
         ticket.setStatus(status);
+        ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket savedTicket = ticketRepository.save(ticket);
 
@@ -391,14 +462,13 @@ public class TicketService {
                 .build();
     }
 
+    @Transactional
     public TicketResponse releaseTicket(
             Long ticketId,
             String email
     ) {
 
-        User agent = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+        User agent = getAgent(email);
 
         Ticket ticket = ticketRepository
                 .findByIdAndAssignedAgent(ticketId, agent)
@@ -424,20 +494,21 @@ public class TicketService {
                 .build();
     }
 
+    @Transactional
     public TicketNoteResponse addInternalNote(
             Long ticketId,
             String email,
             String content
     ) {
 
-        User agent = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+        User agent = getAgent(email);
 
         Ticket ticket = ticketRepository
                 .findByIdAndAssignedAgent(ticketId, agent)
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
+
+        validateTicketIsNotClosed(ticket);
 
         TicketNote note = TicketNote.builder()
                 .content(content)
@@ -458,20 +529,21 @@ public class TicketService {
         );
     }
 
+    @Transactional
     public TicketMessageResponse sendAgentMessage(
             Long ticketId,
             String email,
             String content
     ) {
 
-        User agent = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+        User agent = getAgent(email);
 
         Ticket ticket = ticketRepository
                 .findByIdAndAssignedAgent(ticketId, agent)
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
+
+        validateTicketIsNotClosed(ticket);
 
         TicketMessage message = TicketMessage.builder()
                 .content(content)
@@ -498,9 +570,7 @@ public class TicketService {
             String email
     ) {
 
-        User agent = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+        User agent = getAgent(email);
 
         Ticket ticket = ticketRepository
                 .findByIdAndAssignedAgent(ticketId, agent)
@@ -549,6 +619,7 @@ public class TicketService {
                 .toList();
     }
 
+    @Transactional
     public TicketMessageResponse sendCustomerMessage(
             Long ticketId,
             String email,
@@ -563,6 +634,8 @@ public class TicketService {
                 .findByIdAndCustomer(ticketId, customer)
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
+
+        validateTicketIsNotClosed(ticket);
 
         TicketMessage message = TicketMessage.builder()
                 .content(content)
@@ -591,9 +664,7 @@ public class TicketService {
             String search
     ) {
 
-        User agent = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+        User agent = getAgent(email);
 
         List<Ticket> tickets;
 
@@ -654,9 +725,7 @@ public class TicketService {
 
     public AgentDashboardResponse getAgentDashboard(String email) {
 
-        User agent = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException("Agent not found"));
+        User agent = getAgent(email);
 
         long totalTickets =
                 ticketRepository.countByAssignedAgent(agent);
@@ -687,6 +756,7 @@ public class TicketService {
         );
     }
 
+    @Transactional
     public TicketResponse assignTicket(
             Long ticketId,
             Long agentId
@@ -751,6 +821,7 @@ public class TicketService {
                 .toList();
     }
 
+    @Transactional
     public TicketResponse reassignTicket(
             Long ticketId,
             Long agentId
@@ -790,6 +861,7 @@ public class TicketService {
                 .build();
     }
 
+    @Transactional
     public TicketResponse adminUpdateTicketStatus(
             Long ticketId,
             TicketStatus status
@@ -799,6 +871,11 @@ public class TicketService {
                 .findById(ticketId)
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
+
+        validateStatusTransition(
+                ticket.getStatus(),
+                status
+        );
 
         ticket.setStatus(status);
         ticket.setUpdatedAt(LocalDateTime.now());
@@ -912,6 +989,65 @@ public class TicketService {
         ticketNoteRepository.deleteByTicket(ticket);
 
         ticketRepository.delete(ticket);
+    }
+
+    private User getAgent(String email) {
+
+        User agent = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new AgentNotFoundException("Agent not found"));
+
+        if (agent.getRole() != UserRole.AGENT) {
+            throw new RuntimeException("User is not an agent");
+        }
+
+        return agent;
+    }
+
+    private void validateStatusTransition(
+            TicketStatus currentStatus,
+            TicketStatus newStatus
+    ) {
+
+        if (currentStatus == newStatus) {
+            throw new IllegalArgumentException(
+                    "Ticket is already in " + currentStatus + " status"
+            );
+        }
+
+        boolean valid = switch (currentStatus) {
+
+            case OPEN ->
+                    newStatus == TicketStatus.IN_PROGRESS;
+
+            case IN_PROGRESS ->
+                    newStatus == TicketStatus.OPEN
+                            || newStatus == TicketStatus.RESOLVED;
+
+            case RESOLVED ->
+                    newStatus == TicketStatus.CLOSED
+                            || newStatus == TicketStatus.IN_PROGRESS;
+
+            case CLOSED -> false;
+        };
+
+        if (!valid) {
+            throw new IllegalArgumentException(
+                    "Invalid status transition from "
+                            + currentStatus
+                            + " to "
+                            + newStatus
+            );
+        }
+    }
+
+    private void validateTicketIsNotClosed(Ticket ticket) {
+
+        if (ticket.getStatus() == TicketStatus.CLOSED) {
+            throw new IllegalArgumentException(
+                    "Closed tickets cannot be modified"
+            );
+        }
     }
 
 }

@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -175,6 +177,82 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
+                .body(error);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException exception
+    ) {
+
+        ErrorResponse error = new ErrorResponse(
+                400,
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeException(
+            RuntimeException exception
+    ) {
+
+        ErrorResponse error = new ErrorResponse(
+                500,
+                "An unexpected error occurred"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(error);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException exception
+    ) {
+
+        ErrorResponse error = new ErrorResponse(
+                400,
+                "Validation failed"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestParameter(
+            MissingServletRequestParameterException exception
+    ) {
+
+        ErrorResponse error = new ErrorResponse(
+                400,
+                "Required parameter is missing: "
+                        + exception.getParameterName()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    @ExceptionHandler(AgentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAgentNotFound(
+            AgentNotFoundException exception
+    ) {
+
+        ErrorResponse error = new ErrorResponse(
+                404,
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
                 .body(error);
     }
 

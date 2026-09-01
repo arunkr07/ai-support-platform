@@ -13,7 +13,7 @@ import com.arun.aisupportplatform.exception.UserNotFoundException;
 import com.arun.aisupportplatform.repository.TicketRepository;
 import com.arun.aisupportplatform.repository.UserRepository;
 import com.arun.aisupportplatform.security.JwtService;
-import lombok.Builder;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;

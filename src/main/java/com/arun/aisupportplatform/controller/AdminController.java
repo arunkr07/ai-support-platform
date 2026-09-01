@@ -98,7 +98,7 @@ public class AdminController {
     @PutMapping("/tickets/{id}/status")
     public TicketResponse updateTicketStatus(
             @PathVariable Long id,
-            @RequestBody UpdateTicketStatusRequest request
+            @Valid @RequestBody UpdateTicketStatusRequest request
     ) {
 
         return ticketService.adminUpdateTicketStatus(
