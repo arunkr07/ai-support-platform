@@ -1,14 +1,16 @@
 package com.arun.aisupportplatform.service;
 
+import com.arun.aisupportplatform.ai.dto.TicketAiAnalysisResponse;
+import com.arun.aisupportplatform.ai.dto.TicketAnalysisRequest;
+import com.arun.aisupportplatform.ai.dto.TicketAnalysisResponse;
+import com.arun.aisupportplatform.ai.service.TicketAnalysisService;
 import com.arun.aisupportplatform.dto.*;
 import com.arun.aisupportplatform.entity.*;
 import com.arun.aisupportplatform.exception.AgentNotFoundException;
 import com.arun.aisupportplatform.exception.TicketAlreadyAssignedException;
 import com.arun.aisupportplatform.exception.TicketNotFoundException;
-import com.arun.aisupportplatform.repository.TicketMessageRepository;
-import com.arun.aisupportplatform.repository.TicketNoteRepository;
-import com.arun.aisupportplatform.repository.TicketRepository;
-import com.arun.aisupportplatform.repository.UserRepository;
+import com.arun.aisupportplatform.repository.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TicketService {
@@ -26,6 +29,8 @@ public class TicketService {
     private final UserRepository userRepository;
     private final TicketNoteRepository ticketNoteRepository;
     private final TicketMessageRepository ticketMessageRepository;
+    private final TicketAiAnalysisRepository ticketAiAnalysisRepository;
+    private final TicketAnalysisService ticketAnalysisService;
 
     @Transactional
     public TicketResponse createTicket(
@@ -52,6 +57,35 @@ public class TicketService {
                 .build();
 
         Ticket savedTicket = ticketRepository.save(ticket);
+
+        try {
+
+            TicketAnalysisResponse analysis =
+                    ticketAnalysisService.analyzeTicket(
+                            new TicketAnalysisRequest(
+                                    savedTicket.getTitle(),
+                                    savedTicket.getDescription()
+                            )
+                    );
+
+            TicketAiAnalysis aiAnalysis =
+                    TicketAiAnalysis.builder()
+                            .ticket(savedTicket)
+                            .summary(analysis.summary())
+                            .category(analysis.category())
+                            .suggestedPriority(analysis.suggestedPriority())
+                            .createdAt(LocalDateTime.now())
+                            .build();
+
+            ticketAiAnalysisRepository.save(aiAnalysis);
+
+        } catch (Exception exception) {
+            log.error(
+                    "AI analysis failed for ticket {}",
+                    savedTicket.getId(),
+                    exception
+            );
+        }
 
         return TicketResponse.builder()
                 .id(savedTicket.getId())
@@ -565,6 +599,32 @@ public class TicketService {
         );
     }
 
+    public TicketResponse getAgentTicketById(
+            Long ticketId,
+            String email
+    ) {
+
+        User agent = getAgent(email);
+
+        Ticket ticket = ticketRepository
+                .findByIdAndAssignedAgent(ticketId, agent)
+                .orElseThrow(() ->
+                        new TicketNotFoundException("Ticket not found"));
+
+        return TicketResponse.builder()
+                .id(ticket.getId())
+                .title(ticket.getTitle())
+                .description(ticket.getDescription())
+                .status(ticket.getStatus())
+                .priority(ticket.getPriority())
+                .customerId(ticket.getCustomer().getId())
+                .customerName(ticket.getCustomer().getName())
+                .customerEmail(ticket.getCustomer().getEmail())
+                .createdAt(ticket.getCreatedAt())
+                .updatedAt(ticket.getUpdatedAt())
+                .build();
+    }
+
     public List<TicketMessageResponse> getAgentMessages(
             Long ticketId,
             String email
@@ -989,6 +1049,36 @@ public class TicketService {
         ticketNoteRepository.deleteByTicket(ticket);
 
         ticketRepository.delete(ticket);
+    }
+
+    public TicketAiAnalysisResponse getTicketAiAnalysis(
+            Long ticketId,
+            String email
+    ) {
+
+        User agent = getAgent(email);
+
+        Ticket ticket = ticketRepository
+                .findByIdAndAssignedAgent(ticketId, agent)
+                .orElseThrow(() ->
+                        new TicketNotFoundException("Ticket not found"));
+
+        TicketAiAnalysis analysis =
+                ticketAiAnalysisRepository
+                        .findByTicket(ticket)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "AI analysis not found"
+                                ));
+
+        return new TicketAiAnalysisResponse(
+                analysis.getId(),
+                ticket.getId(),
+                analysis.getSummary(),
+                analysis.getCategory(),
+                analysis.getSuggestedPriority(),
+                analysis.getCreatedAt()
+        );
     }
 
     private User getAgent(String email) {

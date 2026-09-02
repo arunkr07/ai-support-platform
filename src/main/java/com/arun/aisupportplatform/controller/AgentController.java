@@ -1,10 +1,14 @@
 package com.arun.aisupportplatform.controller;
 
+import com.arun.aisupportplatform.ai.dto.AgentSuggestedReplyRequest;
+import com.arun.aisupportplatform.ai.dto.SuggestedReplyRequest;
+import com.arun.aisupportplatform.ai.dto.SuggestedReplyResponse;
+import com.arun.aisupportplatform.ai.dto.TicketAiAnalysisResponse;
+import com.arun.aisupportplatform.ai.service.SuggestedReplyService;
 import com.arun.aisupportplatform.dto.*;
 import com.arun.aisupportplatform.entity.TicketPriority;
 import com.arun.aisupportplatform.entity.TicketStatus;
 import com.arun.aisupportplatform.service.TicketService;
-import com.arun.aisupportplatform.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +25,7 @@ import java.util.List;
 public class AgentController {
 
     private final TicketService ticketService;
+    private final SuggestedReplyService suggestedReplyService;
 
     public record UpdateStatusRequest(
             @NotNull(message = "Status is required")
@@ -155,6 +160,33 @@ public class AgentController {
         String email = authentication.getName();
 
         return ticketService.getAgentDashboard(email);
+    }
+
+    @PostMapping("/tickets/{id}/suggest-reply")
+    public SuggestedReplyResponse suggestReply(
+            @PathVariable Long id,
+            @Valid @RequestBody AgentSuggestedReplyRequest request,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        return suggestedReplyService.generateAgentSuggestedReply(
+                id,
+                email
+        );
+    }
+
+    @GetMapping("/tickets/{id}/ai-analysis")
+    public TicketAiAnalysisResponse getTicketAiAnalysis(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        return ticketService.getTicketAiAnalysis(
+                id,
+                email
+        );
     }
 
 }
