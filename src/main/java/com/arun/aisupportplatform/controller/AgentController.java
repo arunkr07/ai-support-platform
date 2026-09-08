@@ -134,6 +134,16 @@ public class AgentController {
         return ticketService.getAgentMessages(id, email);
     }
 
+    @GetMapping("/tickets/{id}")
+    public TicketResponse getTicketById(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        return ticketService.getAgentTicketById(id, email);
+    }
+
     @GetMapping("/tickets")
     public List<TicketResponse> getTickets(
             @RequestParam(required = false) TicketStatus status,

@@ -1,8 +1,10 @@
 package com.arun.aisupportplatform.service;
 
+import com.arun.aisupportplatform.ai.dto.AiAnalysisResult;
 import com.arun.aisupportplatform.ai.dto.TicketAiAnalysisResponse;
 import com.arun.aisupportplatform.ai.dto.TicketAnalysisRequest;
 import com.arun.aisupportplatform.ai.dto.TicketAnalysisResponse;
+import com.arun.aisupportplatform.ai.service.AiService;
 import com.arun.aisupportplatform.ai.service.TicketAnalysisService;
 import com.arun.aisupportplatform.dto.*;
 import com.arun.aisupportplatform.entity.*;
@@ -10,13 +12,18 @@ import com.arun.aisupportplatform.exception.AgentNotFoundException;
 import com.arun.aisupportplatform.exception.TicketAlreadyAssignedException;
 import com.arun.aisupportplatform.exception.TicketNotFoundException;
 import com.arun.aisupportplatform.repository.*;
+import com.arun.aisupportplatform.entity.AiSuggestedPriority;
+import com.arun.aisupportplatform.entity.TicketAiAnalysis;
+import com.arun.aisupportplatform.entity.TicketCategory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,7 +38,7 @@ public class TicketService {
     private final TicketMessageRepository ticketMessageRepository;
     private final TicketAiAnalysisRepository ticketAiAnalysisRepository;
     private final TicketAnalysisService ticketAnalysisService;
-
+    private final AiService aiService;
     @Transactional
     public TicketResponse createTicket(
             String email,
@@ -1063,22 +1070,86 @@ public class TicketService {
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
 
-        TicketAiAnalysis analysis =
-                ticketAiAnalysisRepository
-                        .findByTicket(ticket)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "AI analysis not found"
-                                ));
+        String prompt = """
+            Analyze the following customer support ticket.
 
-        return new TicketAiAnalysisResponse(
-                analysis.getId(),
-                ticket.getId(),
-                analysis.getSummary(),
-                analysis.getCategory(),
-                analysis.getSuggestedPriority(),
-                analysis.getCreatedAt()
+            Ticket title:
+            %s
+
+            Ticket description:
+            %s
+
+            Current status:
+            %s
+
+            Current priority:
+            %s
+
+            Return ONLY valid JSON in exactly this format:
+
+            {
+              "summary": "short summary of the customer's issue",
+              "category": "one valid ticket category",
+              "suggestedPriority": "one valid suggested priority"
+            }
+            """.formatted(
+                ticket.getTitle(),
+                ticket.getDescription(),
+                ticket.getStatus(),
+                ticket.getPriority()
         );
+
+        String aiResponse = aiService.generateResponse(prompt);
+
+        try {
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            AiAnalysisResult result =
+                    objectMapper.readValue(
+                            aiResponse,
+                            AiAnalysisResult.class
+                    );
+
+            TicketAiAnalysis analysis =
+                    ticketAiAnalysisRepository
+                            .findByTicket(ticket)
+                            .orElseGet(TicketAiAnalysis::new);
+
+            analysis.setTicket(ticket);
+            analysis.setSummary(result.summary());
+            analysis.setCategory(
+                    TicketCategory.valueOf(result.category())
+            );
+            analysis.setSuggestedPriority(
+                    AiSuggestedPriority.valueOf(
+                            result.suggestedPriority()
+                    )
+            );
+
+            if (analysis.getCreatedAt() == null) {
+                analysis.setCreatedAt(LocalDateTime.now());
+            }
+
+            analysis =
+                    ticketAiAnalysisRepository.save(analysis);
+
+            return new TicketAiAnalysisResponse(
+                    analysis.getId(),
+                    ticket.getId(),
+                    analysis.getSummary(),
+                    analysis.getCategory(),
+                    analysis.getSuggestedPriority(),
+                    analysis.getCreatedAt()
+            );
+
+        } catch (Exception e) {
+
+            throw new IllegalStateException(
+                    "Failed to process AI ticket analysis",
+                    e
+            );
+        }
     }
 
     private User getAgent(String email) {
