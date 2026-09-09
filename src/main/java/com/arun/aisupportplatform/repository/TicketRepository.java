@@ -19,19 +19,46 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByAssignedAgent(User assignedAgent);
 
-    Optional<Ticket> findByIdAndAssignedAgent(Long id,User assignedAgent);
+    Optional<Ticket> findByIdAndAssignedAgent(Long id, User assignedAgent);
 
-    List<Ticket> findByAssignedAgentAndStatus(User assignedAgent, TicketStatus status);
+    List<Ticket> findByAssignedAgentAndStatus(
+            User assignedAgent,
+            TicketStatus status
+    );
 
-    List<Ticket> findByAssignedAgentAndPriority(User assignedAgent, TicketPriority priority);
+    List<Ticket> findByAssignedAgentAndPriority(
+            User assignedAgent,
+            TicketPriority priority
+    );
 
-    List<Ticket> findByAssignedAgentAndStatusAndPriority(User assignedAgent, TicketStatus status, TicketPriority priority);
+    List<Ticket> findByAssignedAgentAndStatusAndPriority(
+            User assignedAgent,
+            TicketStatus status,
+            TicketPriority priority
+    );
 
-    List<Ticket> findByAssignedAgentAndTitleContainingIgnoreCase(User assignedAgent, String title);
+    List<Ticket> findByAssignedAgentAndTitleContainingIgnoreCase(
+            User assignedAgent,
+            String title
+    );
+
+    // ADD
+    List<Ticket> findByAssignedAgentOrAssignedAgentIsNull(
+            User assignedAgent
+    );
+
+    // ADD
+    List<Ticket> findByAssignedAgentOrAssignedAgentIsNullAndStatus(
+            User assignedAgent,
+            TicketStatus status
+    );
 
     long countByAssignedAgent(User assignedAgent);
 
-    long countByAssignedAgentAndStatus(User assignedAgent, TicketStatus status);
+    long countByAssignedAgentAndStatus(
+            User assignedAgent,
+            TicketStatus status
+    );
 
     List<Ticket> findByAssignedAgentIsNull();
 
@@ -54,5 +81,4 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             String title,
             String description
     );
-
 }

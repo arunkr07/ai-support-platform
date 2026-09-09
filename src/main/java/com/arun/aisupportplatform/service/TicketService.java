@@ -16,6 +16,7 @@ import com.arun.aisupportplatform.entity.AiSuggestedPriority;
 import com.arun.aisupportplatform.entity.TicketAiAnalysis;
 import com.arun.aisupportplatform.entity.TicketCategory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.arun.aisupportplatform.repository.TicketAiAnalysisRepository;
 
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ public class TicketService {
     private final TicketAiAnalysisRepository ticketAiAnalysisRepository;
     private final TicketAnalysisService ticketAnalysisService;
     private final AiService aiService;
+
     @Transactional
     public TicketResponse createTicket(
             String email,
@@ -738,24 +740,29 @@ public class TicketService {
         if (search != null && !search.isBlank()) {
 
             tickets = ticketRepository
-                    .findByAssignedAgentAndTitleContainingIgnoreCase(
-                            agent,
-                            search
-                    );
+                    .findByTitleContainingIgnoreCase(search)
+                    .stream()
+                    .filter(ticket ->
+                            ticket.getAssignedAgent() == null
+                                    || ticket.getAssignedAgent().equals(agent)
+                    )
+                    .toList();
 
         } else if (status != null && priority != null) {
 
             tickets = ticketRepository
-                    .findByAssignedAgentAndStatusAndPriority(
-                            agent,
-                            status,
-                            priority
-                    );
+                    .findByStatusAndPriority(status, priority)
+                    .stream()
+                    .filter(ticket ->
+                            ticket.getAssignedAgent() == null
+                                    || ticket.getAssignedAgent().equals(agent)
+                    )
+                    .toList();
 
         } else if (status != null) {
 
             tickets = ticketRepository
-                    .findByAssignedAgentAndStatus(
+                    .findByAssignedAgentOrAssignedAgentIsNullAndStatus(
                             agent,
                             status
                     );
@@ -763,15 +770,18 @@ public class TicketService {
         } else if (priority != null) {
 
             tickets = ticketRepository
-                    .findByAssignedAgentAndPriority(
-                            agent,
-                            priority
-                    );
+                    .findByPriority(priority)
+                    .stream()
+                    .filter(ticket ->
+                            ticket.getAssignedAgent() == null
+                                    || ticket.getAssignedAgent().equals(agent)
+                    )
+                    .toList();
 
         } else {
 
             tickets = ticketRepository
-                    .findByAssignedAgent(agent);
+                    .findByAssignedAgentOrAssignedAgentIsNull(agent);
         }
 
         return tickets.stream()
@@ -1050,6 +1060,8 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
+
+        ticketAiAnalysisRepository.deleteByTicket(ticket);
 
         ticketMessageRepository.deleteByTicket(ticket);
 

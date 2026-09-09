@@ -5,21 +5,31 @@ interface LoginRequest {
   password: string;
 }
 
-interface RegisterRequest {
+export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  role: string;
 }
 
 export const login = async (data: LoginRequest) => {
-  const response = await api.post<string>("/api/users/login", data);
+  const response = await api.post<string>(
+    "/api/users/login",
+    data
+  );
 
   return response.data;
 };
 
-export const register = async (data: RegisterRequest) => {
-  const response = await api.post("/api/users/register", data);
+export const register = async (
+  data: RegisterRequest
+) => {
+  const response = await api.post(
+    "/api/users/register",
+    {
+      ...data,
+      role: "CUSTOMER",
+    }
+  );
 
   return response.data;
 };

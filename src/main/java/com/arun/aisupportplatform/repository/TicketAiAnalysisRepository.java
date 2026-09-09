@@ -10,4 +10,6 @@ public interface TicketAiAnalysisRepository
         extends JpaRepository<TicketAiAnalysis, Long> {
 
     Optional<TicketAiAnalysis> findByTicket(Ticket ticket);
+
+    void deleteByTicket(Ticket ticket);
 }

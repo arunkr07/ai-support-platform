@@ -13,6 +13,7 @@ export interface CreateTicketRequest {
 }
 
 export interface TicketResponse {
+  assignedAgentId: number;
   id: number;
   title: string;
   description: string;

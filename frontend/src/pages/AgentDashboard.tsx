@@ -6,6 +6,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import {
   getAgentDashboard,
   getAgentTickets,
+  claimTicket,
   type AgentDashboardResponse,
   type AgentTicketStatus,
   type AgentTicketPriority,
@@ -35,6 +36,9 @@ function AgentDashboard() {
 
   const [priority, setPriority] =
     useState<AgentTicketPriority | "">("");
+
+  const [claimingTicketId, setClaimingTicketId] =
+    useState<number | null>(null);
 
   /*
    * Load agent dashboard
@@ -70,10 +74,7 @@ function AgentDashboard() {
   }, []);
 
   /*
-   * Load assigned tickets
-   *
-   * Status and priority are dependencies because
-   * changing either filter should reload the tickets.
+   * Load agent tickets
    */
   useEffect(() => {
     let cancelled = false;
@@ -111,6 +112,9 @@ function AgentDashboard() {
     };
   }, [status, priority]);
 
+  /*
+   * Search
+   */
   const handleSearch = async () => {
     try {
       setTicketsLoading(true);
@@ -131,6 +135,51 @@ function AgentDashboard() {
     }
   };
 
+  /*
+   * Claim Ticket
+   */
+  const handleClaimTicket = async (
+    event: React.MouseEvent,
+    ticketId: number
+  ) => {
+    event.stopPropagation();
+
+    if (claimingTicketId !== null) {
+      return;
+    }
+
+    try {
+      setClaimingTicketId(ticketId);
+      setError("");
+
+      const claimedTicket =
+        await claimTicket(ticketId);
+
+      /*
+       * Replace the unassigned ticket with
+       * the newly claimed ticket.
+       */
+      setTickets((previousTickets) =>
+        previousTickets.map((ticket) =>
+          ticket.id === claimedTicket.id
+            ? claimedTicket
+            : ticket
+        )
+      );
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "Failed to claim ticket. It may already be assigned to another agent."
+      );
+    } finally {
+      setClaimingTicketId(null);
+    }
+  };
+
+  /*
+   * Priority styling
+   */
   const getPriorityClass = (
     ticketPriority: string
   ) => {
@@ -152,6 +201,9 @@ function AgentDashboard() {
     }
   };
 
+  /*
+   * Status styling
+   */
   const getStatusClass = (
     ticketStatus: string
   ) => {
@@ -172,6 +224,29 @@ function AgentDashboard() {
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  /*
+   * Separate tickets
+   *
+   * Claimable:
+   * OPEN + no assigned agent
+   *
+   * My Tickets:
+   * assigned to the current agent
+   */
+  const claimableTickets = tickets.filter(
+    (ticket) =>
+      ticket.status === "OPEN" &&
+      !ticket.assignedAgentId
+  );
+
+  const myTickets = tickets.filter(
+    (ticket) =>
+      !(
+        ticket.status === "OPEN" &&
+        !ticket.assignedAgentId
+      )
+  );
 
   if (loading) {
     return (
@@ -196,7 +271,7 @@ function AgentDashboard() {
           </h1>
 
           <p className="text-gray-500 mt-1">
-            Manage your assigned support tickets.
+            Manage your support tickets and claim new tickets.
           </p>
         </div>
 
@@ -371,24 +446,27 @@ function AgentDashboard() {
 
         </div>
 
-        {/* Assigned Tickets */}
+        {/* ================================= */}
+        {/* CLAIMABLE TICKETS                 */}
+        {/* ================================= */}
+
         <div>
 
           <div className="flex items-center justify-between mb-4">
 
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                Assigned Tickets
+                Claimable Tickets
               </h2>
 
               <p className="text-sm text-gray-500 mt-1">
-                Tickets currently assigned to you.
+                Open tickets that are not currently assigned to any agent.
               </p>
             </div>
 
             <span className="text-sm text-gray-500">
-              {tickets.length} ticket
-              {tickets.length !== 1 ? "s" : ""}
+              {claimableTickets.length} ticket
+              {claimableTickets.length !== 1 ? "s" : ""}
             </span>
 
           </div>
@@ -399,7 +477,166 @@ function AgentDashboard() {
                 Loading tickets...
               </p>
             </div>
-          ) : tickets.length === 0 ? (
+          ) : claimableTickets.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
+
+              <h3 className="text-lg font-semibold text-gray-700">
+                No claimable tickets
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-1">
+                There are currently no open unassigned tickets.
+              </p>
+
+            </div>
+          ) : (
+            <div className="space-y-4">
+
+              {claimableTickets.map((ticket) => (
+
+                <div
+                  key={ticket.id}
+                  onClick={() =>
+                    navigate(
+                      `/agent/tickets/${ticket.id}`
+                    )
+                  }
+                  className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition cursor-pointer"
+                >
+
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+
+                    <div className="flex-1">
+
+                      <div className="flex items-center gap-3">
+
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {ticket.title}
+                        </h3>
+
+                        <span className="text-sm text-gray-400">
+                          #{ticket.id}
+                        </span>
+
+                      </div>
+
+                      <p className="text-sm text-gray-500 mt-2">
+                        Customer:{" "}
+                        <span className="font-medium text-gray-700">
+                          {ticket.customerName}
+                        </span>
+                      </p>
+
+                      <p className="text-sm text-gray-500 mt-1">
+                        {ticket.customerEmail}
+                      </p>
+
+                      <p className="text-gray-600 mt-4 line-clamp-2">
+                        {ticket.description}
+                      </p>
+
+                    </div>
+
+                    <div className="flex gap-2 flex-wrap">
+
+                      <span
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium ${getStatusClass(
+                          ticket.status
+                        )}`}
+                      >
+                        {ticket.status}
+                      </span>
+
+                      <span
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium ${getPriorityClass(
+                          ticket.priority
+                        )}`}
+                      >
+                        {ticket.priority}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between gap-4">
+
+                    <span className="text-xs text-gray-400">
+                      Created{" "}
+                      {new Date(
+                        ticket.createdAt
+                      ).toLocaleString()}
+                    </span>
+
+                    <div className="flex items-center gap-3">
+
+                      <button
+                        onClick={(event) =>
+                          handleClaimTicket(
+                            event,
+                            ticket.id
+                          )
+                        }
+                        disabled={
+                          claimingTicketId !== null
+                        }
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-medium rounded-lg transition"
+                      >
+                        {claimingTicketId ===
+                        ticket.id
+                          ? "Claiming..."
+                          : "Claim Ticket"}
+                      </button>
+
+                      <span className="text-sm text-blue-600 font-medium">
+                        View Ticket →
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+          )}
+
+        </div>
+
+        {/* ================================= */}
+        {/* MY TICKETS                         */}
+        {/* ================================= */}
+
+        <div>
+
+          <div className="flex items-center justify-between mb-4">
+
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                My Tickets
+              </h2>
+
+              <p className="text-sm text-gray-500 mt-1">
+                Tickets currently assigned to you.
+              </p>
+            </div>
+
+            <span className="text-sm text-gray-500">
+              {myTickets.length} ticket
+              {myTickets.length !== 1 ? "s" : ""}
+            </span>
+
+          </div>
+
+          {ticketsLoading ? (
+            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+              <p className="text-gray-500">
+                Loading tickets...
+              </p>
+            </div>
+          ) : myTickets.length === 0 ? (
             <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
 
               <h3 className="text-lg font-semibold text-gray-700">
@@ -407,14 +644,15 @@ function AgentDashboard() {
               </h3>
 
               <p className="text-sm text-gray-500 mt-1">
-                You currently have no tickets matching these filters.
+                You currently have no tickets assigned to you matching these filters.
               </p>
 
             </div>
           ) : (
             <div className="space-y-4">
 
-              {tickets.map((ticket) => (
+              {myTickets.map((ticket) => (
+
                 <div
                   key={ticket.id}
                   onClick={() =>
@@ -496,6 +734,7 @@ function AgentDashboard() {
                   </div>
 
                 </div>
+
               ))}
 
             </div>
