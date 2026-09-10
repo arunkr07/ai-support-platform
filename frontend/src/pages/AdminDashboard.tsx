@@ -236,40 +236,20 @@ function AdminDashboard() {
       setError("");
       setDeletingTicketId(ticketId);
 
-      /*
-       * IMPORTANT:
-       * This is the actual DELETE request.
-       *
-       * Backend returns HTTP 204 No Content.
-       * Axios treats 204 as a successful response.
-       */
       await deleteAdminTicket(ticketId);
 
-      /*
-       * Remove the ticket immediately from the UI.
-       */
       setTickets((current) =>
         current.filter(
           (ticket) => ticket.id !== ticketId
         )
       );
 
-      /*
-       * Remove it from the unassigned set as well.
-       */
       setUnassignedTicketIds((current) => {
         const updated = new Set(current);
         updated.delete(ticketId);
         return updated;
       });
 
-      /*
-       * The ticket has already been deleted successfully.
-       *
-       * Dashboard refresh is intentionally separate so that
-       * a dashboard-refresh failure does NOT make a successful
-       * deletion look like a failed deletion.
-       */
       try {
         await loadDashboard();
       } catch {
@@ -362,7 +342,7 @@ function AdminDashboard() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex min-h-100 items-center justify-center">
           <p className="text-gray-500">
             Loading admin dashboard...
           </p>
@@ -392,7 +372,6 @@ function AdminDashboard() {
           </div>
         )}
 
-        {/* Statistics */}
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -438,7 +417,6 @@ function AdminDashboard() {
 
         </div>
 
-        {/* People */}
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
 
@@ -474,7 +452,6 @@ function AdminDashboard() {
 
         </div>
 
-        {/* Ticket Management */}
 
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
 

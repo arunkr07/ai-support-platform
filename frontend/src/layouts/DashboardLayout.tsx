@@ -36,7 +36,6 @@ function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-gray-50">
 
-      {/* Sidebar */}
 
       <aside className="flex w-64 flex-col border-r border-gray-200 bg-white">
 
@@ -142,7 +141,6 @@ function DashboardLayout({
 
         </nav>
 
-        {/* User */}
 
         <div className="border-t border-gray-200 p-4">
 
@@ -168,8 +166,6 @@ function DashboardLayout({
         </div>
 
       </aside>
-
-      {/* Main */}
 
       <main className="flex-1">
 

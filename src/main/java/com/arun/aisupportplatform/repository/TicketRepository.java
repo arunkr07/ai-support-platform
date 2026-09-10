@@ -5,8 +5,6 @@ import com.arun.aisupportplatform.entity.TicketPriority;
 import com.arun.aisupportplatform.entity.TicketStatus;
 import com.arun.aisupportplatform.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,12 +40,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             String title
     );
 
-    // ADD
     List<Ticket> findByAssignedAgentOrAssignedAgentIsNull(
             User assignedAgent
     );
 
-    // ADD
     List<Ticket> findByAssignedAgentOrAssignedAgentIsNullAndStatus(
             User assignedAgent,
             TicketStatus status

@@ -1,0 +1,142 @@
+[1mdiff --git a/src/main/java/com/arun/aisupportplatform/config/SecurityConfig.java b/src/main/java/com/arun/aisupportplatform/config/SecurityConfig.java[m
+[1mindex c0cc2b5..5da51e5 100644[m
+[1m--- a/src/main/java/com/arun/aisupportplatform/config/SecurityConfig.java[m
+[1m+++ b/src/main/java/com/arun/aisupportplatform/config/SecurityConfig.java[m
+[36m@@ -2,6 +2,8 @@[m [mpackage com.arun.aisupportplatform.config;[m
+ [m
+ import com.arun.aisupportplatform.security.JwtAuthenticationFilter;[m
+ import lombok.RequiredArgsConstructor;[m
+[32m+[m[32mimport org.slf4j.Logger;[m
+[32m+[m[32mimport org.slf4j.LoggerFactory;[m
+ import org.springframework.context.annotation.Bean;[m
+ import org.springframework.context.annotation.Configuration;[m
+ import org.springframework.http.HttpMethod;[m
+[36m@@ -25,6 +27,9 @@[m [mimport java.util.List;[m
+ @RequiredArgsConstructor[m
+ public class SecurityConfig {[m
+ [m
+[32m+[m[32m    private static final Logger logger =[m
+[32m+[m[32m            LoggerFactory.getLogger(SecurityConfig.class);[m
+[32m+[m
+     private final JwtAuthenticationFilter jwtAuthenticationFilter;[m
+ [m
+     @Bean[m
+[36m@@ -33,12 +38,18 @@[m [mpublic class SecurityConfig {[m
+     }[m
+ [m
+     @Bean[m
+[31m-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {[m
+[32m+[m[32m    public SecurityFilterChain securityFilterChain([m
+[32m+[m[32m            HttpSecurity http[m
+[32m+[m[32m    ) throws Exception {[m
+ [m
+         http[m
+                 .csrf(csrf -> csrf.disable())[m
+ [m
+[31m-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))[m
+[32m+[m[32m                .cors(cors ->[m
+[32m+[m[32m                        cors.configurationSource([m
+[32m+[m[32m                                corsConfigurationSource()[m
+[32m+[m[32m                        )[m
+[32m+[m[32m                )[m
+ [m
+                 .sessionManagement(session ->[m
+                         session.sessionCreationPolicy([m
+[36m@@ -74,39 +85,55 @@[m [mpublic class SecurityConfig {[m
+ [m
+                 .exceptionHandling(exception -> exception[m
+ [m
+[31m-                        .authenticationEntryPoint((request,[m
+[31m-                                                   response,[m
+[31m-                                                   authException) -> {[m
+[31m-[m
+[31m-                            response.setStatus([m
+[31m-                                    HttpStatus.UNAUTHORIZED.value()[m
+[31m-                            );[m
+[31m-[m
+[31m-                            response.setContentType([m
+[31m-                                    MediaType.APPLICATION_JSON_VALUE[m
+[31m-                            );[m
+[31m-[m
+[31m-                            response.getWriter().write([m
+[31m-                                    "{\"status\":401,\"message\":\"Authentication required\"}"[m
+[31m-                            );[m
+[31m-                        })[m
+[31m-[m
+[31m-                        .accessDeniedHandler((request,[m
+[31m-                                              response,[m
+[31m-                                              accessDeniedException) -> {[m
+[31m-[m
+[31m-                            response.setStatus([m
+[31m-                                    HttpStatus.FORBIDDEN.value()[m
+[31m-                            );[m
+[31m-[m
+[31m-                            response.setContentType([m
+[31m-                                    MediaType.APPLICATION_JSON_VALUE[m
+[31m-                            );[m
+[32m+[m[32m                        .authenticationEntryPoint([m
+[32m+[m[32m                                (request,[m
+[32m+[m[32m                                 response,[m
+[32m+[m[32m                                 authException) -> {[m
+[32m+[m
+[32m+[m[32m                                    logger.warn([m
+[32m+[m[32m                                            "Unauthorized request: {} {}",[m
+[32m+[m[32m                                            request.getMethod(),[m
+[32m+[m[32m                                            request.getRequestURI()[m
+[32m+[m[32m                                    );[m
+[32m+[m
+[32m+[m[32m                                    response.setStatus([m
+[32m+[m[32m                                            HttpStatus.UNAUTHORIZED.value()[m
+[32m+[m[32m                                    );[m
+[32m+[m
+[32m+[m[32m                                    response.setContentType([m
+[32m+[m[32m                                            MediaType.APPLICATION_JSON_VALUE[m
+[32m+[m[32m                                    );[m
+[32m+[m
+[32m+[m[32m                                    response.getWriter().write([m
+[32m+[m[32m                                            "{\"status\":401,\"message\":\"Authentication required\"}"[m
+[32m+[m[32m                                    );[m
+[32m+[m[32m                                }[m
+[32m+[m[32m                        )[m
+ [m
+[31m-                            response.getWriter().write([m
+[31m-                                    "{\"status\":403,\"message\":\"Access denied\"}"[m
+[31m-                            );[m
+[31m-                        })[m
+[32m+[m[32m                        .accessDeniedHandler([m
+[32m+[m[32m                                (request,[m
+[32m+[m[32m                                 response,[m
+[32m+[m[32m                                 accessDeniedException) -> {[m
+[32m+[m
+[32m+[m[32m                                    logger.warn([m
+[32m+[m[32m                                            "Access denied: {} {}",[m
+[32m+[m[32m                                            request.getMethod(),[m
+[32m+[m[32m                                            request.getRequestURI()[m
+[32m+[m[32m                                    );[m
+[32m+[m
+[32m+[m[32m                                    response.setStatus([m
+[32m+[m[32m                                            HttpStatus.FORBIDDEN.value()[m
+[32m+[m[32m                                    );[m
+[32m+[m
+[32m+[m[32m                                    response.setContentType([m
+[32m+[m[32m                                            MediaType.APPLICATION_JSON_VALUE[m
+[32m+[m[32m                                    );[m
+[32m+[m
+[32m+[m[32m                                    response.getWriter().write([m
+[32m+[m[32m                                            "{\"status\":403,\"message\":\"Access denied\"}"[m
+[32m+[m[32m                                    );[m
+[32m+[m[32m                                }[m
+[32m+[m[32m                        )[m
+                 )[m
+ [m
+                 .addFilterBefore([m
+[36m@@ -120,7 +147,8 @@[m [mpublic class SecurityConfig {[m
+     @Bean[m
+     public CorsConfigurationSource corsConfigurationSource() {[m
+ [m
+[31m-        CorsConfiguration configuration = new CorsConfiguration();[m
+[32m+[m[32m        CorsConfiguration configuration =[m
+[32m+[m[32m                new CorsConfiguration();[m
+ [m
+         configuration.setAllowedOrigins([m
+                 List.of("http://localhost:5173")[m

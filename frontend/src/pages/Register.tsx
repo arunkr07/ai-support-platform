@@ -107,7 +107,6 @@ function Register() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
             Create Account
@@ -118,17 +117,14 @@ function Register() {
           </p>
         </div>
 
-        {/* Card */}
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
 
-          {/* Error */}
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* Success */}
           {success && (
             <div className="mb-6 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm">
               {success}
@@ -140,7 +136,6 @@ function Register() {
             className="space-y-5"
           >
 
-            {/* Name */}
             <div>
               <label
                 htmlFor="name"
@@ -163,7 +158,6 @@ function Register() {
               />
             </div>
 
-            {/* Email */}
             <div>
               <label
                 htmlFor="email"
@@ -186,7 +180,6 @@ function Register() {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label
                 htmlFor="password"
@@ -213,7 +206,6 @@ function Register() {
               </p>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label
                 htmlFor="confirmPassword"
@@ -238,7 +230,6 @@ function Register() {
               />
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -251,7 +242,6 @@ function Register() {
 
           </form>
 
-          {/* Login */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
               Already have an account?{" "}

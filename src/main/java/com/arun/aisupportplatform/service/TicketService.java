@@ -223,6 +223,12 @@ public class TicketService {
                 .orElseThrow(() ->
                         new TicketNotFoundException("Ticket not found"));
 
+        ticketAiAnalysisRepository.deleteByTicket(ticket);
+
+        ticketMessageRepository.deleteByTicket(ticket);
+
+        ticketNoteRepository.deleteByTicket(ticket);
+
         ticketRepository.delete(ticket);
     }
 
@@ -404,6 +410,8 @@ public class TicketService {
 
         ticket.setStatus(TicketStatus.IN_PROGRESS);
 
+        ticket.setUpdatedAt(LocalDateTime.now());
+
         Ticket savedTicket = ticketRepository.save(ticket);
 
         return TicketResponse.builder()
@@ -519,7 +527,10 @@ public class TicketService {
                         new TicketNotFoundException("Ticket not found"));
 
         ticket.setAssignedAgent(null);
+
         ticket.setStatus(TicketStatus.OPEN);
+
+        ticket.setUpdatedAt(LocalDateTime.now());
 
         Ticket savedTicket = ticketRepository.save(ticket);
 
@@ -1083,28 +1094,28 @@ public class TicketService {
                         new TicketNotFoundException("Ticket not found"));
 
         String prompt = """
-            Analyze the following customer support ticket.
+        Analyze the following customer support ticket.
 
-            Ticket title:
-            %s
+        Ticket title:
+        %s
 
-            Ticket description:
-            %s
+        Ticket description:
+        %s
 
-            Current status:
-            %s
+        Current status:
+        %s
 
-            Current priority:
-            %s
+        Current priority:
+        %s
 
-            Return ONLY valid JSON in exactly this format:
+        Return ONLY valid JSON in exactly this format:
 
-            {
-              "summary": "short summary of the customer's issue",
-              "category": "one valid ticket category",
-              "suggestedPriority": "one valid suggested priority"
-            }
-            """.formatted(
+        {
+          "summary": "short summary of the customer's issue",
+          "category": "one valid ticket category",
+          "suggestedPriority": "one valid suggested priority"
+        }
+        """.formatted(
                 ticket.getTitle(),
                 ticket.getDescription(),
                 ticket.getStatus(),
@@ -1130,11 +1141,13 @@ public class TicketService {
 
             analysis.setTicket(ticket);
             analysis.setSummary(result.summary());
+
             analysis.setCategory(
-                    TicketCategory.valueOf(result.category())
+                    parseTicketCategory(result.category())
             );
+
             analysis.setSuggestedPriority(
-                    AiSuggestedPriority.valueOf(
+                    parseSuggestedPriority(
                             result.suggestedPriority()
                     )
             );
@@ -1219,6 +1232,50 @@ public class TicketService {
         if (ticket.getStatus() == TicketStatus.CLOSED) {
             throw new IllegalArgumentException(
                     "Closed tickets cannot be modified"
+            );
+        }
+    }
+
+    private TicketCategory parseTicketCategory(String category) {
+
+        if (category == null || category.isBlank()) {
+            throw new IllegalArgumentException(
+                    "AI returned an empty ticket category"
+            );
+        }
+
+        String normalizedCategory = category
+                .trim()
+                .toUpperCase();
+
+        try {
+            return TicketCategory.valueOf(normalizedCategory);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(
+                    "AI returned invalid ticket category: " + category
+            );
+        }
+    }
+
+    private AiSuggestedPriority parseSuggestedPriority(
+            String priority
+    ) {
+
+        if (priority == null || priority.isBlank()) {
+            throw new IllegalArgumentException(
+                    "AI returned an empty suggested priority"
+            );
+        }
+
+        String normalizedPriority = priority
+                .trim()
+                .toUpperCase();
+
+        try {
+            return AiSuggestedPriority.valueOf(normalizedPriority);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(
+                    "AI returned invalid suggested priority: " + priority
             );
         }
     }

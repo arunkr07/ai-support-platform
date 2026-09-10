@@ -5,7 +5,6 @@ import com.arun.aisupportplatform.ai.service.AiService;
 import com.arun.aisupportplatform.ai.service.SuggestedReplyService;
 import com.arun.aisupportplatform.ai.service.TicketAnalysisService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -49,9 +49,6 @@ function AgentTicketDetails() {
   const [releasing, setReleasing] =
     useState(false);
 
-  /* ============================= */
-  /* AI STATE                      */
-  /* ============================= */
 
   const [aiAnalysis, setAiAnalysis] =
     useState<TicketAiAnalysisResponse | null>(
@@ -128,9 +125,6 @@ function AgentTicketDetails() {
     loadMessages();
   }, [id]);
 
-  /* ============================= */
-  /* SEND MESSAGE                  */
-  /* ============================= */
 
   const handleSendMessage = async (
     event: FormEvent
@@ -177,9 +171,6 @@ function AgentTicketDetails() {
     }
   };
 
-  /* ============================= */
-  /* STATUS                        */
-  /* ============================= */
 
   const handleStatusChange = async (
     newStatus: AgentTicketStatus
@@ -210,9 +201,6 @@ function AgentTicketDetails() {
     }
   };
 
-  /* ============================= */
-  /* RELEASE                       */
-  /* ============================= */
 
   const handleRelease = async () => {
     if (!ticket) {
@@ -246,9 +234,6 @@ function AgentTicketDetails() {
     }
   };
 
-  /* ============================= */
-  /* AI ANALYSIS                   */
-  /* ============================= */
 
   const handleGenerateAnalysis =
     async () => {
@@ -277,9 +262,6 @@ function AgentTicketDetails() {
       }
     };
 
-  /* ============================= */
-  /* AI SUGGESTED REPLY            */
-  /* ============================= */
 
   const handleGenerateSuggestedReply =
     async () => {
@@ -308,9 +290,6 @@ function AgentTicketDetails() {
       }
     };
 
-  /* ============================= */
-  /* USE AI REPLY                  */
-  /* ============================= */
 
   const handleUseSuggestedReply =
     () => {
@@ -323,9 +302,6 @@ function AgentTicketDetails() {
       );
     };
 
-  /* ============================= */
-  /* BADGES                        */
-  /* ============================= */
 
   const getPriorityClass = (
     ticketPriority: string
@@ -348,9 +324,6 @@ function AgentTicketDetails() {
     }
   };
 
-  /* ============================= */
-  /* LOADING                       */
-  /* ============================= */
 
   if (loading) {
     return (
@@ -364,9 +337,6 @@ function AgentTicketDetails() {
     );
   }
 
-  /* ============================= */
-  /* ERROR                         */
-  /* ============================= */
 
   if (error || !ticket) {
     return (
@@ -397,7 +367,6 @@ function AgentTicketDetails() {
     <DashboardLayout>
       <div>
 
-        {/* BACK BUTTON */}
 
         <button
           onClick={() =>
@@ -408,7 +377,6 @@ function AgentTicketDetails() {
           ← Back to Agent Dashboard
         </button>
 
-        {/* ERROR */}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
@@ -416,9 +384,6 @@ function AgentTicketDetails() {
           </div>
         )}
 
-        {/* ================================= */}
-        {/* TICKET INFORMATION                */}
-        {/* ================================= */}
 
         <div className="bg-white border border-gray-200 rounded-xl p-6">
 
@@ -476,7 +441,6 @@ function AgentTicketDetails() {
 
           </div>
 
-          {/* DESCRIPTION */}
 
           <div className="mt-8 pt-6 border-t border-gray-100">
 
@@ -490,7 +454,6 @@ function AgentTicketDetails() {
 
           </div>
 
-          {/* STATUS */}
 
           <div className="mt-8 pt-6 border-t border-gray-100">
 
@@ -559,9 +522,6 @@ function AgentTicketDetails() {
 
         </div>
 
-        {/* ================================= */}
-        {/* AI ASSISTANCE                     */}
-        {/* ================================= */}
 
         <div className="bg-white border border-gray-200 rounded-xl mt-6">
 
@@ -591,7 +551,6 @@ function AgentTicketDetails() {
 
           <div className="p-6 space-y-6">
 
-            {/* AI ERROR */}
 
             {aiError && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
@@ -599,7 +558,6 @@ function AgentTicketDetails() {
               </div>
             )}
 
-            {/* AI ACTIONS */}
 
             <div className="flex flex-col sm:flex-row gap-3">
 
@@ -634,7 +592,6 @@ function AgentTicketDetails() {
 
             </div>
 
-            {/* AI ANALYSIS */}
 
             {aiAnalysis && (
               <div className="border border-gray-200 rounded-xl overflow-hidden">
@@ -701,8 +658,6 @@ function AgentTicketDetails() {
               </div>
             )}
 
-            {/* SUGGESTED REPLY */}
-
             {suggestedReply && (
               <div className="border border-blue-200 rounded-xl overflow-hidden">
 
@@ -743,9 +698,6 @@ function AgentTicketDetails() {
 
         </div>
 
-        {/* ================================= */}
-        {/* CUSTOMER CONVERSATION             */}
-        {/* ================================= */}
 
         <div className="bg-white border border-gray-200 rounded-xl mt-6">
 
@@ -874,7 +826,6 @@ function AgentTicketDetails() {
 
           </div>
 
-          {/* MESSAGE INPUT */}
 
           <div className="border-t border-gray-200 p-6">
 

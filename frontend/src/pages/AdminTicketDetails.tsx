@@ -221,7 +221,7 @@ function AdminTicketDetails() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex min-h-100 items-center justify-center">
           <p className="text-gray-500">
             Loading ticket...
           </p>
@@ -271,7 +271,6 @@ function AdminTicketDetails() {
           </div>
         )}
 
-        {/* Header */}
 
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
 
@@ -297,7 +296,6 @@ function AdminTicketDetails() {
 
         </div>
 
-        {/* Ticket */}
 
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
@@ -392,7 +390,6 @@ function AdminTicketDetails() {
 
         </div>
 
-        {/* Customer */}
 
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
@@ -436,7 +433,6 @@ function AdminTicketDetails() {
 
         </div>
 
-        {/* Assignment */}
 
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
@@ -444,11 +440,49 @@ function AdminTicketDetails() {
             Assignment
           </h2>
 
-          <p className="mt-1 text-sm text-gray-500">
-            {isUnassigned
-              ? "This ticket is currently unassigned."
-              : "This ticket is currently assigned to an agent."}
-          </p>
+          <div className="mt-4 rounded-lg bg-gray-50 p-4">
+
+            {ticket.assignedAgentId ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Agent ID
+                  </p>
+
+                  <p className="mt-1 font-medium text-gray-900">
+                    {ticket.assignedAgentId}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Name
+                  </p>
+
+                  <p className="mt-1 font-medium text-gray-900">
+                    {ticket.assignedAgentName}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Email
+                  </p>
+
+                  <p className="mt-1 text-sm text-gray-700">
+                    {ticket.assignedAgentEmail}
+                  </p>
+                </div>
+
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">
+                This ticket is currently unassigned.
+              </p>
+            )}
+
+          </div>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
 

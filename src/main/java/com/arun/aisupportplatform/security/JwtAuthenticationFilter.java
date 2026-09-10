@@ -1,6 +1,5 @@
 package com.arun.aisupportplatform.security;
 
-import com.arun.aisupportplatform.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -5,6 +5,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 
 import {
   getAllCustomers,
+  deleteUser,
   type AdminUserResponse,
 } from "../services/adminService";
 
@@ -16,6 +17,9 @@ function AdminCustomers() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [actionLoading, setActionLoading] =
+    useState(false);
 
   const [error, setError] = useState("");
 
@@ -43,6 +47,33 @@ function AdminCustomers() {
     loadCustomers();
   }, [loadCustomers]);
 
+  const handleDelete = async (
+    customer: AdminUserResponse
+  ) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete customer "${customer.name}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError("");
+
+      await deleteUser(customer.id);
+
+      await loadCustomers();
+    } catch {
+      setError(
+        "Failed to delete customer. The customer may still have tickets or message history."
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -53,7 +84,7 @@ function AdminCustomers() {
           </h1>
 
           <p className="mt-1 text-gray-500">
-            View registered customers.
+            View and manage registered customers.
           </p>
         </div>
 
@@ -136,16 +167,30 @@ function AdminCustomers() {
 
                       <td className="px-6 py-4 text-right">
 
-                        <button
-                          onClick={() =>
-                            navigate(
-                              `/admin/customers/${customer.id}`
-                            )
-                          }
-                          className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                        >
-                          View
-                        </button>
+                        <div className="flex justify-end gap-3">
+
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/admin/customers/${customer.id}`
+                              )
+                            }
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                          >
+                            View
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleDelete(customer)
+                            }
+                            disabled={actionLoading}
+                            className="text-sm font-medium text-red-600 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Delete
+                          </button>
+
+                        </div>
 
                       </td>
 

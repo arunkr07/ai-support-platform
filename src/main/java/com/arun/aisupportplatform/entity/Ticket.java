@@ -53,4 +53,8 @@ public class Ticket {
     @ManyToOne
     @JoinColumn(name = "agent_id")
     private User assignedAgent;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

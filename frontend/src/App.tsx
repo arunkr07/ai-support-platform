@@ -28,7 +28,6 @@ function App() {
 
       <Routes>
 
-        {/* Public */}
 
         <Route
           path="/login"
@@ -40,7 +39,6 @@ function App() {
           element={<Register />}
         />
 
-        {/* Customer */}
 
         <Route
           element={
@@ -62,7 +60,6 @@ function App() {
 
         </Route>
 
-        {/* Agent */}
 
         <Route
           element={
@@ -84,7 +81,6 @@ function App() {
 
         </Route>
 
-        {/* Admin */}
 
         <Route
           element={
@@ -121,7 +117,6 @@ function App() {
 
         </Route>
 
-        {/* Fallback */}
 
         <Route
           path="*"

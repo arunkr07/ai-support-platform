@@ -142,9 +142,6 @@ export const sendAgentMessage = async (
   return response.data;
 };
 
-/* ============================= */
-/* AI ASSISTANCE                 */
-/* ============================= */
 
 export const generateSuggestedReply = async (
   id: number

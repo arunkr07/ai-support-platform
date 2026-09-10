@@ -13,15 +13,20 @@ export interface CreateTicketRequest {
 }
 
 export interface TicketResponse {
-  assignedAgentId: number;
   id: number;
   title: string;
   description: string;
   status: string;
   priority: string;
+
   customerId: number;
   customerName: string;
   customerEmail: string;
+
+  assignedAgentId: number | null;
+  assignedAgentName: string | null;
+  assignedAgentEmail: string | null;
+
   createdAt: string;
   updatedAt: string;
 }

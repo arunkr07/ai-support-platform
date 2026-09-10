@@ -2,6 +2,8 @@ package com.arun.aisupportplatform.config;
 
 import com.arun.aisupportplatform.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,6 +27,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(SecurityConfig.class);
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -33,12 +38,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
 
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -48,65 +59,76 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow browser CORS preflight requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
 
-                        // Public authentication endpoints
                         .requestMatchers(
                                 "/api/users/register",
                                 "/api/users/login"
                         )
                         .permitAll()
 
-                        // Admin endpoints
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
-                        // Agent endpoints
                         .requestMatchers("/api/agent/**")
                         .hasAnyRole("AGENT", "ADMIN")
 
-                        // Everything else requires authentication
                         .anyRequest()
                         .authenticated()
                 )
 
                 .exceptionHandling(exception -> exception
 
-                        .authenticationEntryPoint((request,
-                                                   response,
-                                                   authException) -> {
+                        .authenticationEntryPoint(
+                                (request,
+                                 response,
+                                 authException) -> {
 
-                            response.setStatus(
-                                    HttpStatus.UNAUTHORIZED.value()
-                            );
+                                    logger.warn(
+                                            "Unauthorized request: {} {}",
+                                            request.getMethod(),
+                                            request.getRequestURI()
+                                    );
 
-                            response.setContentType(
-                                    MediaType.APPLICATION_JSON_VALUE
-                            );
+                                    response.setStatus(
+                                            HttpStatus.UNAUTHORIZED.value()
+                                    );
 
-                            response.getWriter().write(
-                                    "{\"status\":401,\"message\":\"Authentication required\"}"
-                            );
-                        })
+                                    response.setContentType(
+                                            MediaType.APPLICATION_JSON_VALUE
+                                    );
 
-                        .accessDeniedHandler((request,
-                                              response,
-                                              accessDeniedException) -> {
+                                    response.getWriter().write(
+                                            "{\"status\":401,\"message\":\"Authentication required\"}"
+                                    );
+                                }
+                        )
 
-                            response.setStatus(
-                                    HttpStatus.FORBIDDEN.value()
-                            );
+                        .accessDeniedHandler(
+                                (request,
+                                 response,
+                                 accessDeniedException) -> {
 
-                            response.setContentType(
-                                    MediaType.APPLICATION_JSON_VALUE
-                            );
+                                    logger.warn(
+                                            "Access denied: {} {}",
+                                            request.getMethod(),
+                                            request.getRequestURI()
+                                    );
 
-                            response.getWriter().write(
-                                    "{\"status\":403,\"message\":\"Access denied\"}"
-                            );
-                        })
+                                    response.setStatus(
+                                            HttpStatus.FORBIDDEN.value()
+                                    );
+
+                                    response.setContentType(
+                                            MediaType.APPLICATION_JSON_VALUE
+                                    );
+
+                                    response.getWriter().write(
+                                            "{\"status\":403,\"message\":\"Access denied\"}"
+                                    );
+                                }
+                        )
                 )
 
                 .addFilterBefore(
@@ -120,7 +142,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration configuration =
+                new CorsConfiguration();
 
         configuration.setAllowedOrigins(
                 List.of("http://localhost:5173")

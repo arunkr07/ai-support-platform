@@ -8,14 +8,12 @@ function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const token = localStorage.getItem("token");
   const userData = localStorage.getItem("user");
 
-  // Not logged in
   if (!token || !userData) {
     return <Navigate to="/login" replace />;
   }
 
   const user = JSON.parse(userData);
 
-  // Logged in, but wrong role
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     if (user.role === "CUSTOMER") {
       return <Navigate to="/customer" replace />;

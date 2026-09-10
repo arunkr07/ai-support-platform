@@ -40,9 +40,6 @@ function AgentDashboard() {
   const [claimingTicketId, setClaimingTicketId] =
     useState<number | null>(null);
 
-  /*
-   * Load agent dashboard
-   */
   useEffect(() => {
     let cancelled = false;
 
@@ -73,9 +70,6 @@ function AgentDashboard() {
     };
   }, []);
 
-  /*
-   * Load agent tickets
-   */
   useEffect(() => {
     let cancelled = false;
 
@@ -110,11 +104,9 @@ function AgentDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [status, priority]);
+  }, [status, priority, search]);
 
-  /*
-   * Search
-   */
+
   const handleSearch = async () => {
     try {
       setTicketsLoading(true);
@@ -135,9 +127,6 @@ function AgentDashboard() {
     }
   };
 
-  /*
-   * Claim Ticket
-   */
   const handleClaimTicket = async (
     event: React.MouseEvent,
     ticketId: number
@@ -155,10 +144,6 @@ function AgentDashboard() {
       const claimedTicket =
         await claimTicket(ticketId);
 
-      /*
-       * Replace the unassigned ticket with
-       * the newly claimed ticket.
-       */
       setTickets((previousTickets) =>
         previousTickets.map((ticket) =>
           ticket.id === claimedTicket.id
@@ -177,9 +162,6 @@ function AgentDashboard() {
     }
   };
 
-  /*
-   * Priority styling
-   */
   const getPriorityClass = (
     ticketPriority: string
   ) => {
@@ -201,9 +183,7 @@ function AgentDashboard() {
     }
   };
 
-  /*
-   * Status styling
-   */
+
   const getStatusClass = (
     ticketStatus: string
   ) => {
@@ -225,15 +205,6 @@ function AgentDashboard() {
     }
   };
 
-  /*
-   * Separate tickets
-   *
-   * Claimable:
-   * OPEN + no assigned agent
-   *
-   * My Tickets:
-   * assigned to the current agent
-   */
   const claimableTickets = tickets.filter(
     (ticket) =>
       ticket.status === "OPEN" &&
@@ -264,7 +235,6 @@ function AgentDashboard() {
     <DashboardLayout>
       <div className="space-y-8">
 
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Agent Dashboard
@@ -275,14 +245,12 @@ function AgentDashboard() {
           </p>
         </div>
 
-        {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
 
-        {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
 
           <div className="bg-white border border-gray-200 rounded-xl p-6">
@@ -327,12 +295,10 @@ function AgentDashboard() {
 
         </div>
 
-        {/* Filters */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
 
           <div className="flex flex-col lg:flex-row gap-4">
 
-            {/* Search */}
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Search
@@ -354,7 +320,6 @@ function AgentDashboard() {
               />
             </div>
 
-            {/* Status */}
             <div className="lg:w-48">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Status
@@ -393,7 +358,6 @@ function AgentDashboard() {
               </select>
             </div>
 
-            {/* Priority */}
             <div className="lg:w-48">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Priority
@@ -432,7 +396,6 @@ function AgentDashboard() {
               </select>
             </div>
 
-            {/* Search Button */}
             <div className="lg:self-end">
               <button
                 onClick={handleSearch}
@@ -446,9 +409,6 @@ function AgentDashboard() {
 
         </div>
 
-        {/* ================================= */}
-        {/* CLAIMABLE TICKETS                 */}
-        {/* ================================= */}
 
         <div>
 
@@ -605,9 +565,6 @@ function AgentDashboard() {
 
         </div>
 
-        {/* ================================= */}
-        {/* MY TICKETS                         */}
-        {/* ================================= */}
 
         <div>
 

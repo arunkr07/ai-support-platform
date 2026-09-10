@@ -66,7 +66,6 @@ function CustomerDashboard() {
           </div>
         </div>
 
-        {/* Statistics */}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
 
@@ -102,7 +101,6 @@ function CustomerDashboard() {
 
         </div>
 
-        {/* Create Ticket */}
 
         <div className="mt-8">
           <CreateTicketForm
@@ -110,7 +108,6 @@ function CustomerDashboard() {
           />
         </div>
 
-        {/* Tickets */}
 
         <div className="mt-8">
 

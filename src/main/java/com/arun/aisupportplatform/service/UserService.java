@@ -10,14 +10,16 @@ import com.arun.aisupportplatform.entity.UserRole;
 import com.arun.aisupportplatform.exception.EmailAlreadyExistsException;
 import com.arun.aisupportplatform.exception.UserDeletionException;
 import com.arun.aisupportplatform.exception.UserNotFoundException;
+import com.arun.aisupportplatform.repository.TicketMessageRepository;
+import com.arun.aisupportplatform.repository.TicketNoteRepository;
 import com.arun.aisupportplatform.repository.TicketRepository;
 import com.arun.aisupportplatform.repository.UserRepository;
 import com.arun.aisupportplatform.security.JwtService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -27,17 +29,18 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
-
     private final PasswordEncoder passwordEncoder;
-
     private final JwtService jwtService;
-
     private final TicketRepository ticketRepository;
+    private final TicketMessageRepository ticketMessageRepository;
+    private final TicketNoteRepository ticketNoteRepository;
 
     public UserResponse registerUser(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists");
+            throw new EmailAlreadyExistsException(
+                    "Email already exists"
+            );
         }
 
         User user = User.builder()
@@ -57,8 +60,7 @@ public class UserService {
         );
     }
 
-
-    public String loginUser(LoginRequest request){
+    public String loginUser(LoginRequest request) {
 
         User user = userRepository.findByEmail(
                 request.getEmail()
@@ -74,7 +76,7 @@ public class UserService {
                 user.getPassword()
         );
 
-        if(!matches){
+        if (!matches) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
                     "Wrong password"
@@ -132,7 +134,9 @@ public class UserService {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException("User not found"));
+                        new UserNotFoundException(
+                                "User not found"
+                        ));
 
         return new AdminUserResponse(
                 user.getId(),
@@ -142,14 +146,27 @@ public class UserService {
         );
     }
 
+    @Transactional
     public void deleteUser(Long id) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException("User not found"));
+                        new UserNotFoundException(
+                                "User not found"
+                        ));
 
         if (user.getRole() == UserRole.ADMIN) {
-            throw new UserDeletionException("Admin user cannot be deleted");
+
+            throw new UserDeletionException(
+                    "Admin user cannot be deleted"
+            );
+        }
+
+        if (ticketRepository.findByCustomer(user).size() > 0) {
+
+            throw new UserDeletionException(
+                    "Customer cannot be deleted while tickets exist"
+            );
         }
 
         if (user.getRole() == UserRole.AGENT) {
@@ -158,10 +175,25 @@ public class UserService {
                     ticketRepository.findByAssignedAgent(user);
 
             if (!assignedTickets.isEmpty()) {
+
                 throw new UserDeletionException(
                         "Agent cannot be deleted while tickets are assigned"
                 );
             }
+        }
+
+        if (ticketMessageRepository.existsBySender(user)) {
+
+            throw new UserDeletionException(
+                    "User cannot be deleted because message history exists"
+            );
+        }
+
+        if (ticketNoteRepository.existsByAgent(user)) {
+
+            throw new UserDeletionException(
+                    "User cannot be deleted because note history exists"
+            );
         }
 
         userRepository.delete(user);
@@ -174,7 +206,10 @@ public class UserService {
     ) {
 
         if (userRepository.existsByEmail(email)) {
-            throw new EmailAlreadyExistsException("Email already exists");
+
+            throw new EmailAlreadyExistsException(
+                    "Email already exists"
+            );
         }
 
         User agent = User.builder()
@@ -202,16 +237,23 @@ public class UserService {
 
         User agent = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException("User not found"));
+                        new UserNotFoundException(
+                                "User not found"
+                        ));
 
         if (agent.getRole() != UserRole.AGENT) {
-            throw new RuntimeException("User is not an agent");
+
+            throw new RuntimeException(
+                    "User is not an agent"
+            );
         }
 
         if (!agent.getEmail().equals(email)
                 && userRepository.existsByEmail(email)) {
 
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException(
+                    "Email already exists"
+            );
         }
 
         agent.setName(name);
@@ -226,5 +268,4 @@ public class UserService {
                 updatedAgent.getRole().name()
         );
     }
-
 }

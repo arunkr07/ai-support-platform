@@ -3,7 +3,6 @@ package com.arun.aisupportplatform.controller;
 import com.arun.aisupportplatform.dto.LoginRequest;
 import com.arun.aisupportplatform.dto.RegisterRequest;
 import com.arun.aisupportplatform.dto.UserResponse;
-import com.arun.aisupportplatform.security.JwtService;
 import com.arun.aisupportplatform.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -33,9 +33,6 @@ function TicketDetails() {
   const [message, setMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  /* ============================= */
-  /* EDIT TICKET                   */
-  /* ============================= */
 
   const [editing, setEditing] = useState(false);
 
@@ -51,18 +48,12 @@ function TicketDetails() {
 
   const [updateError, setUpdateError] = useState("");
 
-  /* ============================= */
-  /* REOPEN TICKET                 */
-  /* ============================= */
 
   const [reopeningTicket, setReopeningTicket] =
     useState(false);
 
   const [reopenError, setReopenError] = useState("");
 
-  /* ============================= */
-  /* LOAD TICKET                   */
-  /* ============================= */
 
   useEffect(() => {
     const loadTicket = async () => {
@@ -89,9 +80,6 @@ function TicketDetails() {
     loadTicket();
   }, [id]);
 
-  /* ============================= */
-  /* LOAD MESSAGES                 */
-  /* ============================= */
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -121,9 +109,6 @@ function TicketDetails() {
     loadMessages();
   }, [id]);
 
-  /* ============================= */
-  /* START EDITING                 */
-  /* ============================= */
 
   const handleStartEditing = () => {
     if (!ticket) {
@@ -140,18 +125,12 @@ function TicketDetails() {
     setEditing(true);
   };
 
-  /* ============================= */
-  /* CANCEL EDITING                */
-  /* ============================= */
 
   const handleCancelEditing = () => {
     setEditing(false);
     setUpdateError("");
   };
 
-  /* ============================= */
-  /* UPDATE TICKET                 */
-  /* ============================= */
 
   const handleUpdateTicket = async (
     event: FormEvent<HTMLFormElement>
@@ -202,9 +181,6 @@ function TicketDetails() {
     }
   };
 
-  /* ============================= */
-  /* REOPEN TICKET                 */
-  /* ============================= */
 
   const handleReopenTicket = async () => {
     if (!ticket) {
@@ -230,9 +206,6 @@ function TicketDetails() {
     }
   };
 
-  /* ============================= */
-  /* SEND MESSAGE                  */
-  /* ============================= */
 
   const handleSendMessage = async (
     event: FormEvent
@@ -278,9 +251,6 @@ function TicketDetails() {
     }
   };
 
-  /* ============================= */
-  /* LOADING                       */
-  /* ============================= */
 
   if (loading) {
     return (
@@ -294,9 +264,6 @@ function TicketDetails() {
     );
   }
 
-  /* ============================= */
-  /* ERROR                         */
-  /* ============================= */
 
   if (error || !ticket) {
     return (
@@ -330,9 +297,6 @@ function TicketDetails() {
 
       <div>
 
-        {/* ============================= */}
-        {/* BACK BUTTON                   */}
-        {/* ============================= */}
 
         <button
           onClick={() => navigate("/customer")}
@@ -341,15 +305,11 @@ function TicketDetails() {
           ← Back to My Tickets
         </button>
 
-        {/* ============================= */}
-        {/* TICKET DETAILS                */}
-        {/* ============================= */}
 
         <div className="bg-white border border-gray-200 rounded-xl p-6">
 
           {!editing ? (
             <>
-              {/* Header */}
 
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
 
@@ -400,7 +360,6 @@ function TicketDetails() {
 
               </div>
 
-              {/* Description */}
 
               <div className="mt-8 pt-6 border-t border-gray-100">
 
@@ -414,11 +373,9 @@ function TicketDetails() {
 
               </div>
 
-              {/* Actions */}
 
               <div className="mt-6 pt-6 border-t border-gray-100 flex flex-wrap gap-3">
 
-                {/* Edit */}
 
                 {!isClosed && (
                   <button
@@ -429,7 +386,6 @@ function TicketDetails() {
                   </button>
                 )}
 
-                {/* Reopen */}
 
                 {isResolved && (
                   <button
@@ -445,7 +401,6 @@ function TicketDetails() {
 
               </div>
 
-              {/* Reopen Error */}
 
               {reopenError && (
                 <div className="mt-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
@@ -456,9 +411,6 @@ function TicketDetails() {
             </>
           ) : (
 
-            /* ============================= */
-            /* EDIT FORM                      */
-            /* ============================= */
 
             <form
               onSubmit={handleUpdateTicket}
@@ -483,7 +435,6 @@ function TicketDetails() {
 
               </div>
 
-              {/* Update Error */}
 
               {updateError && (
                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
@@ -491,7 +442,6 @@ function TicketDetails() {
                 </div>
               )}
 
-              {/* Title */}
 
               <div>
 
@@ -516,7 +466,6 @@ function TicketDetails() {
 
               </div>
 
-              {/* Description */}
 
               <div>
 
@@ -547,7 +496,6 @@ function TicketDetails() {
 
               </div>
 
-              {/* Priority */}
 
               <div>
 
@@ -589,7 +537,6 @@ function TicketDetails() {
 
               </div>
 
-              {/* Buttons */}
 
               <div className="flex justify-end gap-3">
 
@@ -619,9 +566,6 @@ function TicketDetails() {
 
         </div>
 
-        {/* ============================= */}
-        {/* CONVERSATION                  */}
-        {/* ============================= */}
 
         <div className="bg-white border border-gray-200 rounded-xl mt-6">
 
@@ -637,7 +581,6 @@ function TicketDetails() {
 
           </div>
 
-          {/* Messages */}
 
           <div className="p-6">
 
@@ -749,7 +692,6 @@ function TicketDetails() {
 
           </div>
 
-          {/* Send Message */}
 
           <div className="border-t border-gray-200 p-6">
 

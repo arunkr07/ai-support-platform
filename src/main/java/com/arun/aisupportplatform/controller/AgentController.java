@@ -1,7 +1,6 @@
 package com.arun.aisupportplatform.controller;
 
 import com.arun.aisupportplatform.ai.dto.AgentSuggestedReplyRequest;
-import com.arun.aisupportplatform.ai.dto.SuggestedReplyRequest;
 import com.arun.aisupportplatform.ai.dto.SuggestedReplyResponse;
 import com.arun.aisupportplatform.ai.dto.TicketAiAnalysisResponse;
 import com.arun.aisupportplatform.ai.service.SuggestedReplyService;
